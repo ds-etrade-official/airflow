@@ -1,0 +1,130 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+---
+version: '3.7'
+networks:
+  airflow:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  airflow_logs:
+    driver: local
+
+x-airflow-env:
+  &airflow-env
+  AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+  AIRFLOW__WEBSERVER__RBAC: "True"
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+  AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+  DB_BACKEND: postgres
+  AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:airflow@postgres/airflow
+  AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://postgres:airflow@postgres/airflow
+  AIRFLOW__CORE__STORE_SERIALIZED_DAGS: "True"
+  AIRFLOW__CORE__STORE_DAG_CODE: "True"
+  AIRFLOW__CORE__LOAD_EXAMPLES: "True"
+
+services:
+
+  postgres:
+    image: postgres:12.2
+    networks:
+      - airflow
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    command: postgres -c 'idle_in_transaction_session_timeout=60000'   # 1 minute timeout
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    cap_add:
+      - SYS_NICE
+
+  scheduler:
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+      - ./dags/:/opt/airflow/dags/:ro
+    environment:
+      <<: *airflow-env
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      bash -c "airflow db upgrade && airflow scheduler"
+    networks:
+      - airflow
+
+  webserver:
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+      - ./dags/:/opt/airflow/dags/:ro
+    environment:
+      <<: *airflow-env
+    depends_on:
+      - postgres
+      - scheduler
+    command: >
+      bash -c "airflow users  create --role Admin --username admin --email admin
+      --firstname admin --lastname admin --password admin && airflow webserver"
+    ports:
+      - "8080:8080"
+    networks:
+      - airflow
+
+  redis:
+    image: redis:5.0.5
+    depends_on:
+      - postgres
+    networks:
+      - airflow
+
+  worker:
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+      - ./dags/:/opt/airflow/dags/:ro
+    environment:
+      <<: *airflow-env
+    command: "celery worker"
+    depends_on:
+      - postgres
+      - scheduler
+      - redis
+    networks:
+      - airflow
+
+  flower:
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+    environment:
+      <<: *airflow-env
+    command: "celery flower"
+    depends_on:
+      - postgres
+      - worker
+      - redis
+    networks:
+      - airflow
+    ports:
+      - "5555:5555"
