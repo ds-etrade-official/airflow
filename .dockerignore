@@ -130,3 +130,6 @@ airflow/www/static/docs
 # Exclude docs generated files
 docs/_build/
 docs/_api/
+Dockerfile
+Dockerfile.ha
+Dockerfile.ci

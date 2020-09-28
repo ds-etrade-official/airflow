@@ -58,7 +58,14 @@ services:
       - SYS_NICE
 
   scheduler:
-    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    build:
+      context: .
+      dockerfile: Dockerfile.ha
+      cache_from:
+        - apache/airflow:master-python3.6-ci
+        - apache/airflow:master-python3.6
+        - astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6
     volumes:
       - airflow_logs:/opt/airflow/logs
       - ./dags/:/opt/airflow/dags/:ro
@@ -73,7 +80,7 @@ services:
       - airflow
 
   webserver:
-    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6
     volumes:
       - airflow_logs:/opt/airflow/logs
       - ./dags/:/opt/airflow/dags/:ro
@@ -98,7 +105,7 @@ services:
       - airflow
 
   worker:
-    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6
     volumes:
       - airflow_logs:/opt/airflow/logs
       - ./dags/:/opt/airflow/dags/:ro
@@ -113,7 +120,7 @@ services:
       - airflow
 
   flower:
-    image: astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
+    image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6
     volumes:
       - airflow_logs:/opt/airflow/logs
     environment:
