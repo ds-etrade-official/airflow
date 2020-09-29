@@ -39,6 +39,7 @@ x-airflow-env:
   AIRFLOW__CORE__STORE_SERIALIZED_DAGS: "True"
   AIRFLOW__CORE__STORE_DAG_CODE: "True"
   AIRFLOW__CORE__LOAD_EXAMPLES: "True"
+  AIRFLOW_HOME: /opt/airflow/
 
 services:
 
@@ -62,10 +63,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.ha
-      cache_from:
-        - apache/airflow:master-python3.6-ci
-        - apache/airflow:master-python3.6
-        - astronomerio/ap-airflow:oss-scheduler-ha-dev1-python3.6
     image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6
     volumes:
       - airflow_logs:/opt/airflow/logs
@@ -79,6 +76,9 @@ services:
       bash -c "airflow db upgrade && airflow scheduler"
     networks:
       - airflow
+    cap_add:
+      - SYS_NICE
+      - SYS_PTRACE
 
   webserver:
     image: astronomerio/ap-airflow:oss-scheduler-ha-dev2-python3.6

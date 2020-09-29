@@ -301,6 +301,8 @@ LABEL org.apache.airflow.gid="0"
 LABEL org.apache.airflow.buildId=${BUILD_ID}
 LABEL org.apache.airflow.commitSha=${COMMIT_SHA}
 
+RUN pip install py-spy
+
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint"]
