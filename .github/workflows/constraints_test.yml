@@ -139,7 +139,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
       fail-fast: false
-    needs:
+    #needs:
       #- static-checks
       #- static-checks-pylint
       #- tests-sqlite
