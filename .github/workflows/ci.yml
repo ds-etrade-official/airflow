@@ -21,9 +21,9 @@ on:
   schedule:
     - cron: '28 0 * * *'
   push:
-    branches: ['master1', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
+    branches: ['master', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
   pull_request:
-    branches: ['master1', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
+    branches: ['master', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
 
 env:
 
@@ -58,6 +58,8 @@ env:
   #
   # You can also switch back to building images locally and disabling the "Build Images" workflow
   # by defining AIRFLOW_GITHUB_REGISTRY_WAIT_FOR_IMAGE secret with value set to "false"
+  # Mod Test
+
 
   GITHUB_REGISTRY_WAIT_FOR_IMAGE: ${{ secrets.AIRFLOW_GITHUB_REGISTRY_WAIT_FOR_IMAGE != 'false' }}
 
