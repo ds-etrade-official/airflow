@@ -116,6 +116,9 @@ class DagFileProcessorProcess(AbstractDagFileProcessorProcess, LoggingMixin, Mul
     def file_path(self) -> str:
         return self._file_path
 
+    def __repr__(self) -> str:
+        return f'<{type(self).__name__} file_path={self.file_path!r}>'
+
     @staticmethod
     def _run_file_processor(
         result_channel: MultiprocessingConnection,
@@ -292,7 +295,7 @@ class DagFileProcessorProcess(AbstractDagFileProcessorProcess, LoggingMixin, Mul
                 self._parent_channel.close()
                 return True
             except EOFError:
-                pass
+                self.log.warning("TEST: EOFError received", exc_info=True)
 
         if not self._process.is_alive():
             self._done = True
@@ -300,6 +303,8 @@ class DagFileProcessorProcess(AbstractDagFileProcessorProcess, LoggingMixin, Mul
             self._process.join()
             self._parent_channel.close()
             return True
+        else:
+            self.log.warning("TEST: process still alive")
 
         return False
 
@@ -310,7 +315,7 @@ class DagFileProcessorProcess(AbstractDagFileProcessorProcess, LoggingMixin, Mul
         :rtype: int or None
         """
         if not self.done:
-            raise AirflowException("Tried to get the result before it's done!")
+            raise AirflowException(f"{self} Tried to get the result before it's done!")
         return self._result
 
     @property
