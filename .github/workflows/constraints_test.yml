@@ -64,7 +64,7 @@ env:
 jobs:
 
   constraints:
-    timeout-minutes: 10
+    timeout-minutes: 30
     name: "Constraints"
     runs-on: ubuntu-latest
     strategy:
