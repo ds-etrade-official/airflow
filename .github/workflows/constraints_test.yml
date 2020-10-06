@@ -23,7 +23,7 @@ on:
   push:
     branches: ['master1', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
   pull_request:
-    branches: ['master', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
+    branches: ['master1', 'v1-10-test', 'v1-10-stable','er-constraints-impl']
 
 env:
 
@@ -69,7 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6]
+        #python-version: [3.6, 3.7, 3.8]
       fail-fast: false
     #needs:
       #- static-checks
