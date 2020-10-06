@@ -26,6 +26,8 @@ if [[ ${GITHUB_REF} == 'refs/heads/master' ]]; then
   echo "::set-output name=branch::constraints-master"
 elif [[ ${GITHUB_REF} == 'refs/heads/v1-10-test' ]]; then
   echo "::set-output name=branch::constraints-1-10"
+elif [[ ${GITHUB_REF} == 'refs/heads/er-constraints-impl' ]]; then
+  echo "::set-output name=branch::constraints-er-constraints-impl"
 else
   echo
   echo "Unexpected ref ${GITHUB_REF}. Exiting!"
