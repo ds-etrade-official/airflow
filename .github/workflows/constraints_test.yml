@@ -104,7 +104,7 @@ jobs:
           path: './files/constraints-${{matrix.python-version}}/constraints-${{matrix.python-version}}.txt'
 
   constraints-push:
-    timeout-minutes: 10
+    timeout-minutes: 12
     name: "Constraints push"
     runs-on: ubuntu-latest
     needs: [constraints]
