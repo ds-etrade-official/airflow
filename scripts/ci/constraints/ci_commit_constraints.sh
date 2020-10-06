@@ -22,7 +22,10 @@ export PYTHON_MAJOR_MINOR_VERSION=${PYTHON_MAJOR_MINOR_VERSION:-3.6}
 
 get_environment_for_builds_on_ci
 
+echo "Copying Constraints File"
+ls ./artifacts/constraints-*/constraints*.txt
 cp -v ./artifacts/constraints-*/constraints*.txt repo/
+ls repo
 cd repo || exit 1
 git config --local user.email "ernest@astronomer.io"
 git config --local user.name "Automated Github Actions commit"
@@ -36,3 +39,4 @@ All tests passed in this build so we determined we can push the updated constrai
 
 See https://github.com/apache/airflow/blob/master/README.md#installing-from-pypi for details.
 "
+echo "Commit Done"
