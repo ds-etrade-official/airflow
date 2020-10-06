@@ -24,7 +24,7 @@ get_environment_for_builds_on_ci
 
 cp -v ./artifacts/constraints-*/constraints*.txt repo/
 cd repo || exit 1
-git config --local user.email "dev@airflow.apache.org"
+git config --local user.email "ernest@astronomer.io"
 git config --local user.name "Automated Github Actions commit"
 git diff --exit-code || git commit --all --message "Updating constraints. Build id:${CI_BUILD_ID}
 
