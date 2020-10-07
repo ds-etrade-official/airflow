@@ -29,8 +29,8 @@ cp -v ./artifacts/constraints-*/constraints*.txt repo/
 echo "Copied Constraints File"
 ls repo
 cd repo || exit 1
-git config -v --local user.email "ernest@astronomer.io"
-git config -v --local user.name "ernest-kr"
+git config --local user.email "ernest@astronomer.io"
+git config --local user.name "ernest-kr"
 git diff --exit-code || git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
 
 This update in constraints is automatically committed by the CI 'constraints-push' step based on
