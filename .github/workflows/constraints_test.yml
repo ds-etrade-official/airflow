@@ -128,7 +128,7 @@ jobs:
       - name: "Commit changed constraint files"
         run: ./scripts/ci/constraints/ci_commit_constraints.sh
       - name: "Push changes"
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ steps.constraints-branch.outputs.branch }}

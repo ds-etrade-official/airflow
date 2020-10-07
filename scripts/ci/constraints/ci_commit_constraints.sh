@@ -22,17 +22,15 @@ export PYTHON_MAJOR_MINOR_VERSION=${PYTHON_MAJOR_MINOR_VERSION:-3.6}
 
 get_environment_for_builds_on_ci
 
-
+echo "Verifying Files"
 ls ./artifacts/constraints-*/
-echo "#####"
-ls ./artifacts/
 echo "Copying Constraints File"
 cp -v ./artifacts/constraints-*/constraints*.txt repo/
-echo "Copyied Constraints File"
+echo "Copied Constraints File"
 ls repo
 cd repo || exit 1
 git config --local user.email "ernest@astronomer.io"
-git config --local user.name "Automated Github Actions commit"
+git config --local user.name "ernest-kr"
 git diff --exit-code || git commit --all --message "Updating constraints. Build id:${CI_BUILD_ID}
 
 This update in constraints is automatically committed by the CI 'constraints-push' step based on
