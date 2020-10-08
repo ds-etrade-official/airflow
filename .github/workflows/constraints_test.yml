@@ -104,7 +104,7 @@ jobs:
           path: './files/constraints-${{matrix.python-version}}/constraints-${{matrix.python-version}}.txt'
 
   constraints-push:
-    timeout-minutes: 12
+    timeout-minutes: 22
     name: "Constraints push"
     runs-on: ubuntu-latest
     needs: [constraints]
@@ -133,4 +133,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ steps.constraints-branch.outputs.branch }}
           directory: "repo"
+          force: true
  
