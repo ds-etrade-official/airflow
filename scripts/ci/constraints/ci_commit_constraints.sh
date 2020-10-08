@@ -37,11 +37,14 @@ echo "done"
 git config --local user.email "ernest@astronomer.io"
 git config --local user.name "ernest-kr"
 echo "git add"
+touch abcd.py
+git add -f abcd.py
 git add -f constraints-3.6.txt
 echo "done"
 git status
 echo "status"
-git diff --exit-code || git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
+#git diff --exit-code || git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
+git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
 This update in constraints is automatically committed by the CI 'constraints-push' step based on
 HEAD of '${CI_REF}' in '${CI_TARGET_REPO}'
 with commit sha ${COMMIT_SHA}.
