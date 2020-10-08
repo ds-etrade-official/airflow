@@ -32,7 +32,7 @@ cd repo || exit 1
 cp constraints-3.6.txt constraints-3.7.txt
 git config --local user.email "ernest@astronomer.io"
 git config --local user.name "ernest-kr"
-#git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
+git add constraints-*.txt
 git diff --exit-code || git commit -v --all --message "Updating constraints. Build id:${CI_BUILD_ID} 
 This update in constraints is automatically committed by the CI 'constraints-push' step based on
 HEAD of '${CI_REF}' in '${CI_TARGET_REPO}'
