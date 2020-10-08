@@ -30,6 +30,8 @@ echo "Copied Constraints File"
 ls repo
 cd repo || exit 1
 cp constraints-3.6.txt constraints-3.7.txt
+ls -a 
+git status
 git config --local user.email "ernest@astronomer.io"
 git config --local user.name "ernest-kr"
 git add constraints-*.txt
