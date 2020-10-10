@@ -28,10 +28,10 @@ gid: 50000
 airflowHome: "/opt/airflow"
 
 # Default airflow repository -- overrides all the specific images below
-defaultAirflowRepository: dimberman/airflow
+defaultAirflowRepository: apache/airflow
 
 # Default airflow tag to deploy
-defaultAirflowTag: scheduler-ha-with-dags-0.1
+defaultAirflowTag: 1.10.12
 
 
 # Select certain nodes for airflow pods.
@@ -288,7 +288,7 @@ workers:
 
 # Airflow scheduler settings
 scheduler:
-  replicas: 2
+  replicas: 1
   # Scheduler pod disruption budget
   podDisruptionBudget:
     enabled: false
