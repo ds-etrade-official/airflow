@@ -37,9 +37,9 @@ echo "done"
 git config --local user.email "ernest@astronomer.io"
 git config --local user.name "ernest-kr"
 echo "git add"
-touch abcd.py
-git add -f abcd.py
-git add -f constraints-3.6.txt
+#touch abcd.py
+#git add -f abcd.py
+git add -f constraints-3.*.txt
 echo "done"
 git status
 echo "status"
