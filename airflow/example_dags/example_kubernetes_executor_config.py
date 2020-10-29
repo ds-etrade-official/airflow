@@ -167,7 +167,9 @@ with DAG(
                 "namespace": "test-namespace",
                 "labels": {
                     "release": "stable"
-                }
+                },
+                'request_memory': '128Mi',
+                'limit_memory': '128Mi'
             }
         }
     )
