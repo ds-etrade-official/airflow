@@ -284,27 +284,28 @@ mapping = {
 
 def remap_permissions():
     """Apply Map Airflow view permissions."""
-    appbuilder = create_app(config={'FAB_UPDATE_PERMS': False}).appbuilder
-    for old, new in mapping.items():
-        (old_view_name, old_perm_name) = old
-        old_pvm = appbuilder.sm.find_permission_view_menu(old_perm_name, old_view_name)
-        if not old_pvm:
-            continue
-        for new_perm_name, new_view_name in new:
-            new_pvm = appbuilder.sm.add_permission_view_menu(new_perm_name, new_view_name)
-            for role in appbuilder.sm.get_all_roles():
-                if appbuilder.sm.exist_permission_on_roles(old_view_name, old_perm_name, [role.id]):
-                    appbuilder.sm.add_permission_role(role, new_pvm)
-                    appbuilder.sm.del_permission_role(role, old_pvm)
-        appbuilder.sm.del_permission_view_menu(old_perm_name, old_view_name)
+    pass
+    # appbuilder = create_app(config={'FAB_UPDATE_PERMS': False}).appbuilder
+    # for old, new in mapping.items():
+    #     (old_view_name, old_perm_name) = old
+    #     old_pvm = appbuilder.sm.find_permission_view_menu(old_perm_name, old_view_name)
+    #     if not old_pvm:
+    #         continue
+    #     for new_perm_name, new_view_name in new:
+    #         new_pvm = appbuilder.sm.add_permission_view_menu(new_perm_name, new_view_name)
+    #         for role in appbuilder.sm.get_all_roles():
+    #             if appbuilder.sm.exist_permission_on_roles(old_view_name, old_perm_name, [role.id]):
+    #                 appbuilder.sm.add_permission_role(role, new_pvm)
+    #                 appbuilder.sm.del_permission_role(role, old_pvm)
+    #     appbuilder.sm.del_permission_view_menu(old_perm_name, old_view_name)
 
-        if not appbuilder.sm.find_permission(old_perm_name):
-            continue
-        view_menus = appbuilder.sm.get_all_view_menu()
-        if not any(
-            [appbuilder.sm.find_permission_view_menu(old_perm_name, view.name) for view in view_menus]
-        ):
-            appbuilder.sm.del_permission(old_perm_name)
+    #     if not appbuilder.sm.find_permission(old_perm_name):
+    #         continue
+    #     view_menus = appbuilder.sm.get_all_view_menu()
+    #     if not any(
+    #         [appbuilder.sm.find_permission_view_menu(old_perm_name, view.name) for view in view_menus]
+    #     ):
+    #         appbuilder.sm.del_permission(old_perm_name)
 
 
 def upgrade():
