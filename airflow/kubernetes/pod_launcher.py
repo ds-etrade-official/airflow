@@ -178,12 +178,17 @@ class PodLauncher(LoggingMixin):
         if self.extract_xcom:
             result = self._extract_xcom(pod)
             self.log.info(result)
-            result = json.loads(result)
+            try:
+                _result = json.loads(result)
+            except:
+                self.log.error(f"Failed to JSON decode xcom: {result}")
         while self.pod_is_running(pod):
             self.istio.handle_istio_proxy(self.read_pod(pod))
             self.log.info('Pod %s has state %s', pod.metadata.name, State.RUNNING)
             time.sleep(SleepConfig.POD_RUNNING_POLL)
-        return self._task_status(self.read_pod(pod)), result
+        if result is None:
+            raise AirflowException('Failed to extract xcom from pod: {}'.format(pod.metadata.name))
+        return self._task_status(self.read_pod(pod)), _result
 
     def _task_status(self, event):
         self.log.info(
@@ -276,8 +281,6 @@ class PodLauncher(LoggingMixin):
             self._exec_pod_command(resp, 'kill -s SIGINT 1')
         finally:
             resp.close()
-        if result is None:
-            raise AirflowException('Failed to extract xcom from pod: {}'.format(pod.metadata.name))
         return result
 
     def _exec_pod_command(self, resp, command):
