@@ -179,8 +179,8 @@ class PodLauncher(LoggingMixin):
             result = self._extract_xcom(pod)
             self.log.info(result)
             result = json.loads(result)
-        self.istio.handle_istio_proxy(self.read_pod(pod))
         while self.pod_is_running(pod):
+            self.istio.handle_istio_proxy(self.read_pod(pod))
             self.log.info('Pod %s has state %s', pod.metadata.name, State.RUNNING)
             time.sleep(SleepConfig.POD_RUNNING_POLL)
         return self._task_status(self.read_pod(pod)), result

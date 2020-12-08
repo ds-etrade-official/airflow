@@ -18,6 +18,8 @@
 from airflow import AirflowException
 from airflow.utils.log.logging_mixin import LoggingMixin
 from kubernetes.stream import stream
+from kubernetes.client.rest import ApiException
+
 try:
     from packaging.version import parse as semantic_version
 except ImportError:
@@ -137,16 +139,19 @@ class Istio(LoggingMixin):
         """ Send the curl to shutdown the isto-proxy container
         """
         # Use exec to curl localhost inside of the sidecar.
-        _ = stream(
-            self._client.connect_get_namespaced_pod_exec,
-            pod.metadata.name,
-            pod.metadata.namespace,
-            tty=False,
-            stderr=True,
-            stdin=False,
-            stdout=True,
-            container=container.name,
-            command=[
-                '/bin/sh',
-                '-c',
-                'curl -XPOST http://127.0.0.1:{}/quitquitquit'.format(status_port)])
+        try:
+            _ = stream(
+                self._client.connect_get_namespaced_pod_exec,
+                pod.metadata.name,
+                pod.metadata.namespace,
+                tty=False,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                container=container.name,
+                command=[
+                    '/bin/sh',
+                    '-c',
+                    'curl -XPOST http://127.0.0.1:{}/quitquitquit'.format(status_port)])
+        except ApiException:
+            self.log.warning("Istio proxy already shut down.")
