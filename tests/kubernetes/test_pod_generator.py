@@ -598,9 +598,9 @@ class TestPodGenerator(unittest.TestCase):
                         {'name': 'key1', 'value': 'val1'},
                         {'name': 'key2', 'value': 'val2'}
                     ],
-                    'envFrom': [],
                     'image': 'image1',
                     'name': 'base',
+                    'envFrom': [],
                     'ports': [{
                         'containerPort': 2118,
                         'name': 'port',
@@ -665,8 +665,8 @@ class TestPodGenerator(unittest.TestCase):
                     'args': [],
                     'command': ['command'],
                     'env': [],
-                    'envFrom': [],
                     'name': 'base',
+                    'envFrom': [],
                     'ports': [],
                     'resources': {
                         'limits': {
@@ -995,8 +995,9 @@ class TestPodGenerator(unittest.TestCase):
 
     def test_reconcile_containers(self):
         base_ports = [k8s.V1ContainerPort(container_port=1, name='base_port')]
+        env_from = [k8s.V1EnvFromSource(config_map_ref=k8s.V1ConfigMapEnvSource(name='configmap_a'))]
         base_objs = [
-            k8s.V1Container(name='base_container1', ports=base_ports),
+            k8s.V1Container(name='base_container1', ports=base_ports, env_from=env_from),
             k8s.V1Container(name='base_container2', image='base_image'),
         ]
         client_ports = [k8s.V1ContainerPort(container_port=2, name='client_port')]
@@ -1006,6 +1007,7 @@ class TestPodGenerator(unittest.TestCase):
         ]
         res = PodGenerator.reconcile_containers(base_objs, client_objs)
         client_objs[0].ports = base_ports + client_ports
+        client_objs[0].env_from = env_from
         self.assertEqual(client_objs, res)
 
         base_ports = [k8s.V1ContainerPort(container_port=1, name='base_port')]
