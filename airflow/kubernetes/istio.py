@@ -40,6 +40,7 @@ class Istio(LoggingMixin):
     def __init__(self, kube_client):
         super(Istio, self).__init__()
         self._client = kube_client
+        self.shut_down_called = False
 
     def handle_istio_proxy(self, pod):
         """If an istio-proxy sidecar is detected, and all other containers
@@ -62,6 +63,7 @@ class Istio(LoggingMixin):
                           "an istio-proxy sidecar to be cleaned up. " +
                           "pod name: {}".format(pod.metadata.name))
             self._shutdown_istio_proxy(pod)
+            self.shut_down_called = True
             return True
         return False
 
@@ -75,6 +77,9 @@ class Istio(LoggingMixin):
             (bool): True if we detect istio-proxy, and all other containers
                     are finished running, otherwise false
         """
+        if self.shut_down_called:
+            self.log.debug("Istio shutdown already initiated.")
+            return False
         if pod.status.phase != "Running":
             return False
         found_istio = False
@@ -139,19 +144,16 @@ class Istio(LoggingMixin):
         """ Send the curl to shutdown the isto-proxy container
         """
         # Use exec to curl localhost inside of the sidecar.
-        try:
-            _ = stream(
-                self._client.connect_get_namespaced_pod_exec,
-                pod.metadata.name,
-                pod.metadata.namespace,
-                tty=False,
-                stderr=True,
-                stdin=False,
-                stdout=True,
-                container=container.name,
-                command=[
-                    '/bin/sh',
-                    '-c',
-                    'curl -XPOST http://127.0.0.1:{}/quitquitquit'.format(status_port)])
-        except ApiException:
-            self.log.warning("Istio proxy already shut down.")
+        _ = stream(
+            self._client.connect_get_namespaced_pod_exec,
+            pod.metadata.name,
+            pod.metadata.namespace,
+            tty=False,
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            container=container.name,
+            command=[
+                '/bin/sh',
+                '-c',
+                'curl -XPOST http://127.0.0.1:{}/quitquitquit'.format(status_port)])

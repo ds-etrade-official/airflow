@@ -182,10 +182,8 @@ class PodLauncher(LoggingMixin):
                 _result = json.loads(result)
             except:
                 self.log.error(f"Failed to JSON decode xcom: {result}")
-        istio_shut_down_initiated = False
         while self.pod_is_running(pod):
-            if not istio_shut_down_initiated:
-                istio_shut_down_initiated = self.istio.handle_istio_proxy(self.read_pod(pod))
+            self.istio.handle_istio_proxy(self.read_pod(pod))
             self.log.info('Pod %s has state %s', pod.metadata.name, State.RUNNING)
             time.sleep(SleepConfig.POD_RUNNING_POLL)
         if result is None:
