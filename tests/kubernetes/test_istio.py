@@ -84,6 +84,27 @@ class TestIstio(unittest.TestCase):
                          'curl -XPOST http://127.0.0.1:12345/quitquitquit'])
 
     @patch("airflow.kubernetes.istio.stream", new=mock_stream)
+    def test_handle_istio_proxy_called_once(self):
+        args = ["proxy", "sidecar", "--statusPort", "12345"]
+        self._handle_istio_proxy_with_sidecar_args(args)
+        self._handle_istio_proxy_with_sidecar_args(args)
+        self._handle_istio_proxy_with_sidecar_args(args)
+        self._handle_istio_proxy_with_sidecar_args(args)
+        self._handle_istio_proxy_with_sidecar_args(args)
+        self.istio._client.connect_get_namespaced_pod_exec.\
+            assert_called_once_with(
+                'fake-pod-name',
+                'fake-namespace',
+                tty=False,
+                container='istio-proxy',
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                command=['/bin/sh',
+                         '-c',
+                         'curl -XPOST http://127.0.0.1:12345/quitquitquit'])
+
+    @patch("airflow.kubernetes.istio.stream", new=mock_stream)
     def test_handle_istio_proxy_other_cli_format(self):
         args = ["proxy", "sidecar", "--statusPort=12345"]
         self._handle_istio_proxy_with_sidecar_args(args)
