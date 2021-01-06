@@ -106,7 +106,7 @@ jobs:
           persist-credentials: false
           submodules: recursive
       - name: "Get information about the PR"
-        uses: .github/actions/get-workflow-origin
+        uses: ./.github/actions/get-workflow-origin
         id: source-run-info
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
