@@ -1,0 +1,3 @@
+[submodule ".github/actions/get-workflow-origin"]
+	path = .github/actions/get-workflow-origin
+	url = https://github.com/potiuk/get-workflow-origin
