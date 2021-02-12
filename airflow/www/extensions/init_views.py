@@ -89,13 +89,13 @@ def init_appbuilder_views(app):
         views.SlaMissModelView, permissions.RESOURCE_SLA_MISS, category=permissions.RESOURCE_BROWSE_MENU
     )
     appbuilder.add_view(
+        views.XComModelView, permissions.RESOURCE_XCOM, category=permissions.RESOURCE_BROWSE_MENU
+    )
+    appbuilder.add_view(
         views.PluginView, permissions.RESOURCE_PLUGIN, category=permissions.RESOURCE_ADMIN_MENU
     )
     appbuilder.add_view(
         views.PoolModelView, permissions.RESOURCE_POOL, category=permissions.RESOURCE_ADMIN_MENU
-    )
-    appbuilder.add_view(
-        views.XComModelView, permissions.RESOURCE_XCOM, category=permissions.RESOURCE_ADMIN_MENU
     )
     # add_view_no_menu to change item position.
     # I added link in extensions.init_appbuilder_links.init_appbuilder_links
