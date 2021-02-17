@@ -302,22 +302,6 @@ function push_pull_remove_images::check_for_image_in_github_packages() {
     fi
 }
 
-# in the 'master" builds we determine builds based on secret and fallback to default GITHUB_REGISTRY variable
-function push_pull_remove_images::determine_github_registry() {
-    local github_registry
-    if [[ -n ${GITHUB_REGISTRY_SECRET=} ]]; then
-        github_registry=${GITHUB_REGISTRY_SECRET}
-    else
-        # shellcheck disable=SC2153
-        github_registry=${GITHUB_REGISTRY}
-    fi
-    echo
-    echo "Setting githubRegistry output to ${github_registry}"
-    echo
-    echo "::set-output name=githubRegistry::${github_registry}"
-}
-
-
 # waits for an image to be available in GitHub Container Registry. Should be run with `set +e`
 function push_pull_remove_images::check_for_image_in_github_container_registry() {
     local image_name_in_github_registry="${1}"
