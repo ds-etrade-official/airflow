@@ -215,7 +215,6 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):  # pylint: disable=
         """Sync the provided roles and permissions."""
         existing_roles = self._get_all_roles_with_permissions()
         non_dag_perms = self._get_all_non_dag_permissions()
-
         for config in roles:
             role_name = config['role']
             perms = config['perms']
@@ -724,7 +723,7 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):  # pylint: disable=
         :return: None.
         """
         # Create global all-dag permissions
-        self.create_perm_vm_for_all_dag()
+        self.create_permission_for_all_dags()
 
         # Sync the default roles (Admin, Viewer, User, Op, public) with related permissions
         self.bulk_sync_roles(self.ROLE_CONFIGS)
@@ -761,7 +760,7 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):  # pylint: disable=
             self.create_permission(dag_action_name, dag_resource_name)
 
         if access_control:
-            self._sync_dag_view_permissions(dag_resource_name, access_control)
+            self._sync_dag_permissions(dag_resource_name, access_control)
 
     def get_resource_permissions(self, resource: ViewMenu) -> PermissionView:
         """
@@ -845,8 +844,8 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):  # pylint: disable=
         """
         return self.add_view_menu(name)
 
-    def create_perm_vm_for_all_dag(self):
-        """Create perm-vm if not exist and insert into FAB security model for all-dags."""
+    def create_permission_for_all_dags(self):
+        """Create permissions if not exist and insert into FAB security model for all-dags."""
         # create perm for global logical dag
         for resource_name in self.DAG_RESOURCES:
             for action_name in self.DAG_ACTIONS:
