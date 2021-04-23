@@ -79,8 +79,8 @@ class ResourceVersion(Borg):
     def __init__(
         self,
         *,
-        kube_client: Optional[client.CoreV1Api] = None,
-        namespace: Optional[str] = None,
+        kube_client: client.CoreV1Api = None,
+        namespace: str = None,
         resource_version: Optional[str] = None,
     ):
         Borg.__init__(self)
@@ -106,8 +106,7 @@ def get_resource_version(kube_client: client.CoreV1Api, namespace: str):
     See https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes
     """
     pod_list = kube_client.list_namespaced_pod(namespace)
-    resource_version = pod_list.metadata.resource_version
-    return resource_version
+    return pod_list.metadata.resource_version
 
 
 class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
@@ -303,10 +302,9 @@ class AirflowKubernetesScheduler(LoggingMixin):
         return resp
 
     def _make_kube_watcher(self) -> KubernetesJobWatcher:
-        resource_instance = ResourceVersion(
+        resource_version = ResourceVersion(
             kube_client=self.kube_client, namespace=self.kube_config.kube_namespace
-        )
-        resource_version = resource_instance.resource_version  # pylint: disable=no-member
+        ).resource_version  # pylint: disable=no-member
         watcher = KubernetesJobWatcher(
             watcher_queue=self.watcher_queue,
             namespace=self.kube_config.kube_namespace,
