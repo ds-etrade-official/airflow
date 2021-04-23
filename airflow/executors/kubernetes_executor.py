@@ -117,7 +117,6 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
         namespace: Optional[str],
         multi_namespace_mode: bool,
         watcher_queue: 'Queue[KubernetesWatchType]',
-        resource_version: str,
         scheduler_job_id: Optional[str],
         kube_config: Configuration,
     ):
@@ -126,7 +125,6 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
         self.multi_namespace_mode = multi_namespace_mode
         self.scheduler_job_id = scheduler_job_id
         self.watcher_queue = watcher_queue
-        self.resource_version = resource_version
         self.kube_config = kube_config
 
     def run(self) -> None:
@@ -136,8 +134,15 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
             raise AirflowException(NOT_STARTED_MESSAGE)
         while True:
             try:
-                self.resource_version = self._run(
-                    kube_client, self.resource_version, self.scheduler_job_id, self.kube_config
+                ResourceVersion(
+                    resource_version=self._run(
+                        kube_client,
+                        ResourceVersion(  # pylint: disable=no-member
+                            kube_client=kube_client, namespace=self.kube_config.kube_namespace
+                        ).resource_version,
+                        self.scheduler_job_id,
+                        self.kube_config,
+                    )
                 )
             except ReadTimeoutError:
                 self.log.warning(
@@ -150,7 +155,9 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
             else:
                 self.log.warning(
                     'Watch died gracefully, starting back up with: last resource_version: %s',
-                    self.resource_version,
+                    ResourceVersion(  # pylint: disable=no-member
+                        kube_client=kube_client, namespace=self.kube_config.kube_namespace
+                    ).resource_version,
                 )
 
     def _run(
@@ -182,7 +189,7 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
             task = event['object']
             self.log.info('Event: %s had an event of type %s', task.metadata.name, event['type'])
             if event['type'] == 'ERROR':
-                return self.process_error(event, kube_client)
+                return self.process_error(event)
             annotations = task.metadata.annotations
             task_instance_related_annotations = {
                 'dag_id': annotations['dag_id'],
@@ -206,7 +213,6 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
     def process_error(
         self,
         event: Any,
-        kube_client: client.CoreV1Api,
     ) -> str:
         """Process error response"""
         self.log.error('Encountered Error response from k8s list namespaced pod stream => %s', event)
@@ -217,7 +223,7 @@ class KubernetesJobWatcher(multiprocessing.Process, LoggingMixin):
                 'relisting pods to get the latest version. Error => %s',
                 (raw_object['message'],),
             )
-            return get_resource_version(kube_client, self.namespace)
+            return None
         raise AirflowException(
             'Kubernetes failure for %s with code %s and message: %s'
             % (raw_object['reason'], raw_object['code'], raw_object['message'])
@@ -302,14 +308,10 @@ class AirflowKubernetesScheduler(LoggingMixin):
         return resp
 
     def _make_kube_watcher(self) -> KubernetesJobWatcher:
-        resource_version = ResourceVersion(
-            kube_client=self.kube_client, namespace=self.kube_config.kube_namespace
-        ).resource_version  # pylint: disable=no-member
         watcher = KubernetesJobWatcher(
             watcher_queue=self.watcher_queue,
             namespace=self.kube_config.kube_namespace,
             multi_namespace_mode=self.kube_config.multi_namespace_mode,
-            resource_version=resource_version,
             scheduler_job_id=self.scheduler_job_id,
             kube_config=self.kube_config,
         )
