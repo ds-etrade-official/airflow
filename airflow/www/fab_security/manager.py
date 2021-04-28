@@ -335,9 +335,7 @@ class BaseSecurityManager(AbstractSecurityManager):
                     if fab_role:
                         _roles.append(fab_role)
                     else:
-                        log.warning(
-                            f"Can't find role specified in AUTH_ROLES_MAPPING: {fab_role_name}"
-                        )
+                        log.warning(f"Can't find role specified in AUTH_ROLES_MAPPING: {fab_role_name}")
         return _roles
 
     @property
@@ -511,8 +509,7 @@ class BaseSecurityManager(AbstractSecurityManager):
             # Checks if decorator is well behaved and returns a dict as supposed.
             if not type(ret) == dict:
                 log.error(
-                    "OAuth user info decorated function "
-                    "did not returned a dict, but: {}".format(type(ret))
+                    "OAuth user info decorated function " "did not returned a dict, but: {}".format(type(ret))
                 )
                 return {}
             return ret

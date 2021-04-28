@@ -28,8 +28,8 @@ from sqlalchemy.orm import contains_eager
 from sqlalchemy.orm.exc import MultipleResultsFound
 from werkzeug.security import generate_password_hash
 
-from ..manager import BaseSecurityManager
-from .models import Permission, PermissionView, RegisterUser, Role, User, ViewMenu, assoc_permissionview_role
+from airflow.www.fab_security.manager import BaseSecurityManager
+from airflow.www.fab_security.sqla.models import Permission, PermissionView, RegisterUser, Role, User, ViewMenu, assoc_permissionview_role
 
 log = logging.getLogger(__name__)
 
