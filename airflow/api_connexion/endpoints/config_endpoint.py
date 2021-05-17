@@ -18,6 +18,7 @@
 from flask import Response, request
 
 from airflow.api_connexion import security
+from airflow.api_connexion.endpoints import api_blueprint, openapi
 from airflow.api_connexion.exceptions import PermissionDenied
 from airflow.api_connexion.schemas.config_schema import Config, ConfigOption, ConfigSection, config_schema
 from airflow.configuration import conf
@@ -63,8 +64,10 @@ def _config_to_json(config: Config) -> str:
     return json.dumps(config_schema.dump(config), indent=4)
 
 
-@security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONFIG)])
-def get_config() -> Response:
+# @security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONFIG)])
+@api_blueprint.route('/config/<file_token>')
+@openapi
+def get_config(file_token) -> Response:
     """Get current configuration."""
     serializer = {
         'text/plain': _config_to_text,

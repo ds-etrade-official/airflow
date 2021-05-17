@@ -1316,7 +1316,9 @@ paths:
         '406':
           $ref: '#/components/responses/NotAcceptable'
 
-  /config:
+  /config/{file_token}:
+    parameters:
+      - $ref: '#/components/parameters/FileToken'
     get:
       summary: Get current configuration
       x-openapi-router-controller: airflow.api_connexion.endpoints.config_endpoint

@@ -17,6 +17,7 @@
 from functools import wraps
 from typing import Callable, Dict, TypeVar, cast
 
+from flask import request
 from pendulum.parsing import ParserError
 from sqlalchemy import asc, desc
 
@@ -82,6 +83,8 @@ def format_parameters(params_formatters: Dict[str, Callable[..., bool]]) -> Call
             for key, formatter in params_formatters.items():
                 if key in kwargs:
                     kwargs[key] = formatter(kwargs[key])
+                elif key in request.openapi.parameters.query:
+                    kwargs[key] = formatter(request.openapi.parameters.query[key])
             return func(*args, **kwargs)
 
         return cast(T, wrapped_function)

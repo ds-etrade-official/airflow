@@ -33,7 +33,9 @@ from airflow.security import permissions
 from airflow.utils.session import provide_session
 
 
-@security.requires_access([(permissions.ACTION_CAN_DELETE, permissions.RESOURCE_CONNECTION)])
+# @security.requires_access([(permissions.ACTION_CAN_DELETE, permissions.RESOURCE_CONNECTION)])
+@api_blueprint.route('/connections/<connection_id>', methods=['DELETE'])
+@openapi
 @provide_session
 def delete_connection(connection_id, session):
     """Delete a connection entry"""
@@ -44,10 +46,12 @@ def delete_connection(connection_id, session):
             detail=f"The Connection with connection_id: `{connection_id}` was not found",
         )
     session.delete(connection)
-    return NoContent, 204
+    return Response(status=204)
 
 
-@security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONNECTION)])
+# @security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONNECTION)])
+@api_blueprint.route('/connections/<connection_id>', methods=['GET'])
+@openapi
 @provide_session
 def get_connection(connection_id, session):
     """Get a connection entry"""
@@ -60,7 +64,9 @@ def get_connection(connection_id, session):
     return connection_schema.dump(connection)
 
 
-@security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONNECTION)])
+# @security.requires_access([(permissions.ACTION_CAN_READ, permissions.RESOURCE_CONNECTION)])
+@api_blueprint.route('/connections', methods=['GET'])
+@openapi
 @format_parameters({'limit': check_limit})
 @provide_session
 def get_connections(session, limit, offset=0, order_by="id"):
@@ -77,7 +83,9 @@ def get_connections(session, limit, offset=0, order_by="id"):
     )
 
 
-@security.requires_access([(permissions.ACTION_CAN_EDIT, permissions.RESOURCE_CONNECTION)])
+# @security.requires_access([(permissions.ACTION_CAN_EDIT, permissions.RESOURCE_CONNECTION)])
+@api_blueprint.route('/connections/<connection_id>', methods=['PATCH'])
+@openapi
 @provide_session
 def patch_connection(connection_id, session, update_mask=None):
     """Update a connection entry"""
@@ -111,7 +119,7 @@ def patch_connection(connection_id, session, update_mask=None):
     return connection_schema.dump(connection)
 
 
-@security.requires_access([(permissions.ACTION_CAN_CREATE, permissions.RESOURCE_CONNECTION)])
+# @security.requires_access([(permissions.ACTION_CAN_CREATE, permissions.RESOURCE_CONNECTION)])
 @provide_session
 def post_connection(session):
     """Create connection entry"""
