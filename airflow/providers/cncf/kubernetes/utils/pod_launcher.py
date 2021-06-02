@@ -34,6 +34,7 @@ from requests.exceptions import BaseHTTPError
 from airflow.exceptions import AirflowException
 from airflow.kubernetes.kube_client import get_kube_client
 from airflow.kubernetes.pod_generator import PodDefaults
+from airflow.providers.cncf.kubernetes.utils.istio import Istio
 from airflow.settings import pod_mutation_hook
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.state import State
@@ -44,6 +45,20 @@ def should_retry_start_pod(exception: Exception):
     if isinstance(exception, ApiException):
         return exception.status == 409
     return False
+
+
+class SleepConfig:
+    """Configure sleeps used for polling"""
+
+    # Only polls during the start of a pod
+    POD_STARTING_POLL = 1
+    # Used to detect all cleanup jobs are completed
+    # and the entire Pod is cleaned up
+    POD_RUNNING_POLL = 1
+    # Polls for the duration of the task execution
+    # to detect when the task is done. The difference
+    # between this and POD_RUNNING_POLL is sidecars.
+    BASE_CONTAINER_RUNNING_POLL = 2
 
 
 class PodStatus:
@@ -77,6 +92,7 @@ class PodLauncher(LoggingMixin):
         self._client = kube_client or get_kube_client(in_cluster=in_cluster, cluster_context=cluster_context)
         self._watch = watch.Watch()
         self.extract_xcom = extract_xcom
+        self.istio = Istio(self._client)
 
     def run_pod_async(self, pod: V1Pod, **kwargs):
         """Runs POD asynchronously"""
@@ -129,7 +145,8 @@ class PodLauncher(LoggingMixin):
                 delta = dt.now() - curr_time
                 if delta.total_seconds() >= startup_timeout:
                     raise AirflowException("Pod took too long to start")
-                time.sleep(1)
+                time.sleep(SleepConfig.POD_STARTING_POLL)
+            self.log.debug('Pod not yet started')
 
     def monitor_pod(self, pod: V1Pod, get_logs: bool) -> Tuple[State, V1Pod, Optional[str]]:
         """
@@ -160,16 +177,19 @@ class PodLauncher(LoggingMixin):
                     # Prefer logs duplication rather than loss
                     read_logs_since_sec = math.ceil(delta.total_seconds())
         result = None
+        while self.base_container_is_running(pod):
+            self.log.info('Container %s has state %s', pod.metadata.name, State.RUNNING)
+            time.sleep(SleepConfig.BASE_CONTAINER_RUNNING_POLL)
         if self.extract_xcom:
-            while self.base_container_is_running(pod):
-                self.log.info('Container %s has state %s', pod.metadata.name, State.RUNNING)
-                time.sleep(2)
             result = self._extract_xcom(pod)
             self.log.info(result)
             result = json.loads(result)
+        istio_shut_down_initiated = False
         while self.pod_is_running(pod):
             self.log.info('Pod %s has state %s', pod.metadata.name, State.RUNNING)
-            time.sleep(2)
+            time.sleep(SleepConfig.POD_RUNNING_POLL)
+            if not istio_shut_down_initiated:
+                istio_shut_down_initiated = self.istio.handle_istio_proxy(self.read_pod(pod))
         remote_pod = self.read_pod(pod)
         return self._task_status(remote_pod), remote_pod, result
 
