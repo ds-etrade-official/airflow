@@ -19,6 +19,14 @@
 Changelog
 ---------
 
+1.2.1
+.....
+
+Bug Fixes
+~~~~~~~~~
+
+* ``[astro] Handle istio-proxy for Kubernetes Pods (#62)``
+
 1.2.0
 .....
 
