@@ -22,7 +22,7 @@ on:  # yamllint disable-line rule:truthy
     - cron: '28 0 * * *'
   push:
     branches: ['master', 'v1-10-test', 'v1-10-stable', 'v2-1-*']
-    tags: ['v2.1.0\+astro.*']
+    tags: ['v2.1.1\+astro.*']
   pull_request:
     branches: ['master', 'v1-10-test', 'v1-10-stable', 'v2-1-test']
 
@@ -1052,7 +1052,7 @@ ${{ hashFiles('.pre-commit-config.yaml') }}"
       - prod-images
       - docs
     if: >
-      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/v2-1-0') &&
+      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/v2-1-1') &&
       github.event_name != 'schedule'
     strategy:
       matrix:
@@ -1111,7 +1111,7 @@ ${{ hashFiles('.pre-commit-config.yaml') }}"
       - ci-images
       - docs
     if: >
-      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/v2-1-0' ) &&
+      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/v2-1-1' ) &&
       github.event_name != 'schedule'
     strategy:
       matrix:
@@ -1284,7 +1284,7 @@ ${{ hashFiles('.pre-commit-config.yaml') }}"
       - tests-mysql
       - docs
     if: |
-      (startsWith(github.ref, 'refs/tags/v2.1.0+astro') || github.ref == 'refs/heads/v2-1-0') &&
+      (startsWith(github.ref, 'refs/tags/v2.1.1+astro') || github.ref == 'refs/heads/v2-1-1') &&
       github.event_name != 'pull_request'
     env:
       PULL_PYTHON_BASE_IMAGES_FROM_CACHE: "false"
