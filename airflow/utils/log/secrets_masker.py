@@ -42,13 +42,15 @@ if TYPE_CHECKING:
 
 DEFAULT_SENSITIVE_FIELDS = frozenset(
     {
-        'password',
-        'secret',
-        'passwd',
-        'authorization',
+        'access_token',
         'api_key',
         'apikey',
-        'access_token',
+        'authorization',
+        'passphrase',
+        'passwd',
+        'password',
+        'private_key',
+        'secret',
     }
 )
 """Names of fields (Connection extra, Variable key name etc.) that are deemed sensitive"""
