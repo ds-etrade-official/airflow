@@ -760,7 +760,7 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):  # pylint: disable=
             self.create_permission(dag_action_name, dag_resource_name)
 
         if access_control:
-            self._sync_dag_permissions(dag_resource_name, access_control)
+            self._sync_dag_view_permissions(dag_resource_name, access_control)
 
     def get_resource_permissions(self, resource: ViewMenu) -> PermissionView:
         """
