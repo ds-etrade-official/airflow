@@ -17,8 +17,8 @@
 
 import datetime
 
-from flake_appbuilder.models.sqla import Model
-from flake_appbuilder.models.sqla._compat import as_unicode
+from flask_appbuilder.models.sqla import Model
+from flask_appbuilder.models.sqla._compat import as_unicode
 from flask import g
 from sqlalchemy import (
     Boolean,

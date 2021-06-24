@@ -23,7 +23,6 @@ import re
 from typing import Dict, List, Set, Tuple
 
 from flask import g, session, url_for
-from flask_appbuilder.basemanager import BaseManager
 from flask_appbuilder.const import (
     AUTH_DB,
     AUTH_LDAP,
@@ -73,60 +72,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 log = logging.getLogger(__name__)
 
 
-class AbstractSecurityManager(BaseManager):
-    """
-    Abstract SecurityManager class, declares all methods used by the
-    framework. There is no assumptions about security models or auth types.
-    """
-
-    def add_permissions_view(self, base_permissions, view_menu):
-        """
-        Adds a permission on a view menu to the backend
-
-        :param base_permissions:
-            list of permissions from view (all exposed methods):
-             'can_add','can_edit' etc...
-        :param view_menu:
-            name of the view or menu to add
-        """
-        raise NotImplementedError
-
-    def add_permissions_menu(self, view_menu_name):
-        """
-        Adds menu_access to menu on permission_view_menu
-
-        :param view_menu_name:
-            The menu name
-        """
-        raise NotImplementedError
-
-    def register_views(self):
-        """
-        Generic function to create the security views
-        """
-        raise NotImplementedError
-
-    def is_item_public(self, permission_name, view_name):
-        """
-        Check if view has public permissions
-
-        :param permission_name:
-            the permission: can_show, can_edit...
-        :param view_name:
-            the name of the class view (child of BaseView)
-        """
-        raise NotImplementedError
-
-    def has_access(self, permission_name, view_name):
-        """
-        Check if current user or public has access to view or menu
-        """
-        raise NotImplementedError
-
-    def security_cleanup(self, baseviews, menus):
-        raise NotImplementedError
-
-
 def _oauth_tokengetter(token=None):
     """
     Default function to return the current user oauth token
@@ -137,7 +82,7 @@ def _oauth_tokengetter(token=None):
     return token
 
 
-class BaseSecurityManager(AbstractSecurityManager):
+class BaseSecurityManager:
     auth_view = None
     """ The obj instance for authentication view """
     user_view = None
