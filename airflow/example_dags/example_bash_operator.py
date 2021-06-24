@@ -24,19 +24,29 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.utils.dates import days_ago
+from airflow.models.params import IntParam, StringParam
 
 args = {
     'owner': 'airflow',
 }
 
+dag_params = {
+    'example_key': StringParam(required=True, option_list=['abc', 'test']),
+    'int_key': IntParam(default=5, required=True, min=0, max=10),
+}
+
+task_param = {
+    'dummy': StringParam(default='foo', match_regex='(foo|bar)'),
+}
+
 with DAG(
     dag_id='example_bash_operator',
     default_args=args,
-    schedule_interval='0 0 * * *',
+    schedule_interval=None,
     start_date=days_ago(2),
     dagrun_timeout=timedelta(minutes=60),
     tags=['example', 'example2'],
-    params={"example_key": "example_value"},
+    params=dag_params,
 ) as dag:
 
     run_this_last = DummyOperator(
@@ -46,7 +56,7 @@ with DAG(
     # [START howto_operator_bash]
     run_this = BashOperator(
         task_id='run_after_loop',
-        bash_command='echo 1',
+        bash_command='echo {{ params["example_key"] }}',
     )
     # [END howto_operator_bash]
 
@@ -70,7 +80,8 @@ with DAG(
 # [START howto_operator_bash_skip]
 this_will_skip = BashOperator(
     task_id='this_will_skip',
-    bash_command='echo "hello world"; exit 99;',
+    bash_command='echo {{ params["dummy"] }}; exit 99;',
+    params=task_param,
     dag=dag,
 )
 # [END howto_operator_bash_skip]

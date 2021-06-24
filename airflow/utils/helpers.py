@@ -31,6 +31,7 @@ from airflow.configuration import conf
 from airflow.exceptions import AirflowException
 from airflow.utils.module_loading import import_string
 
+
 KEY_REGEX = re.compile(r'^[\w.-]+$')
 
 
@@ -216,3 +217,18 @@ def build_airflow_url_with_query(query: Dict[str, Any]) -> str:
     view = conf.get('webserver', 'dag_default_view').lower()
     url = url_for(f"Airflow.{view}")
     return f"{url}?{parse.urlencode(query)}"
+
+
+def transform_params(params: Dict[str, Any]) -> Dict:
+    """
+    Iterate over the params dict & convert the native values to correct params objects
+    """
+    if params is None or not isinstance(params, dict):
+        return {}
+
+    from airflow.models.params import PARAMS_TYPE_MAP
+
+    updated_params = {k: PARAMS_TYPE_MAP[type(v)](default=v) for k, v in params.items() if type(v) in PARAMS_TYPE_MAP}
+    params.update(updated_params)
+
+    return params

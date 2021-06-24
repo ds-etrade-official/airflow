@@ -54,6 +54,7 @@ from airflow.exceptions import (
 from airflow.models.base import COLLATION_ARGS, ID_LEN, Base
 from airflow.models.connection import Connection
 from airflow.models.log import Log
+from airflow.models.params import BaseParam
 from airflow.models.taskfail import TaskFail
 from airflow.models.taskreschedule import TaskReschedule
 from airflow.models.variable import Variable
@@ -1584,6 +1585,12 @@ class TaskInstance(Base, LoggingMixin):
         if conf.getboolean('core', 'dag_run_conf_overrides_params'):
             self.overwrite_params_with_dag_run_conf(params=params, dag_run=dag_run)
 
+        # Now update params dict with simple values
+        for k, v in params.items():
+            if isinstance(v, BaseParam):
+                params[k] = v()
+
+
         class VariableAccessor:
             """
             Wrapper around Variable. This way you can get variables in
@@ -1743,7 +1750,13 @@ class TaskInstance(Base, LoggingMixin):
         """Overwrite Task Params with DagRun.conf"""
         if dag_run and dag_run.conf:
             self.log.debug("Updating task params (%s) with DagRun.conf (%s)", params, dag_run.conf)
-            params.update(dag_run.conf)
+            for k, v in dag_run.conf.items():
+                if k in params:
+                    params[k].default = v
+                    # Now call params to check if it's still valid
+                    params[k]()
+                else:
+                    params[k] = v
 
     def render_templates(self, context: Optional[Context] = None) -> None:
         """Render templates in the operator fields."""
