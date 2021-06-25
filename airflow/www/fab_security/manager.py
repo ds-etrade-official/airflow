@@ -1449,25 +1449,25 @@ class BaseSecurityManager:
         :param view_menu:
             name of the view or menu to add
         """
-        view_menu_db = self.add_view_menu(view_menu)
-        perm_views = self.find_permissions_view_menu(view_menu_db)
+        view_menu_db = self.create_resource(view_menu)
+        perm_views = self.get_resource_permissions(view_menu_db)
 
         if not perm_views:
             # No permissions yet on this view
             for permission in base_permissions:
-                pv = self.add_permission_view_menu(permission, view_menu)
+                pv = self.create_permission(permission, view_menu)
                 if self.auth_role_admin not in self.builtin_roles:
                     role_admin = self.find_role(self.auth_role_admin)
-                    self.add_permission_role(role_admin, pv)
+                    self.add_permission_to_role(role_admin, pv)
         else:
             # Permissions on this view exist but....
             role_admin = self.find_role(self.auth_role_admin)
             for permission in base_permissions:
                 # Check if base view permissions exist
                 if not self.exist_permission_on_views(perm_views, permission):
-                    pv = self.add_permission_view_menu(permission, view_menu)
+                    pv = self.create_permission(permission, view_menu)
                     if self.auth_role_admin not in self.builtin_roles:
-                        self.add_permission_role(role_admin, pv)
+                        self.add_permission_to_role(role_admin, pv)
             for perm_view in perm_views:
                 if perm_view.permission is None:
                     # Skip this perm_view, it has a null permission
@@ -1475,17 +1475,17 @@ class BaseSecurityManager:
                 if perm_view.permission.name not in base_permissions:
                     # perm to delete
                     roles = self.get_all_roles()
-                    perm = self.find_permission(perm_view.permission.name)
+                    perm = self.get_action(perm_view.permission.name)
                     # del permission from all roles
                     for role in roles:
-                        self.del_permission_role(role, perm)
-                    self.del_permission_view_menu(perm_view.permission.name, view_menu)
+                        self.remove_permission_from_role(role, perm)
+                    self.delete_permission(perm_view.permission.name, view_menu)
                 elif (
                     self.auth_role_admin not in self.builtin_roles
                     and perm_view not in role_admin.permissions
                 ):
                     # Role Admin must have all permissions
-                    self.add_permission_role(role_admin, perm_view)
+                    self.add_permission_to_role(role_admin, perm_view)
 
     def add_permissions_menu(self, view_menu_name):
         """
@@ -1494,13 +1494,13 @@ class BaseSecurityManager:
         :param view_menu_name:
             The menu name
         """
-        self.add_view_menu(view_menu_name)
-        pv = self.find_permission_view_menu("menu_access", view_menu_name)
+        self.create_resource(view_menu_name)
+        pv = self.get_permission("menu_access", view_menu_name)
         if not pv:
-            pv = self.add_permission_view_menu("menu_access", view_menu_name)
+            pv = self.create_permission("menu_access", view_menu_name)
         if self.auth_role_admin not in self.builtin_roles:
             role_admin = self.find_role(self.auth_role_admin)
-            self.add_permission_role(role_admin, pv)
+            self.add_permission_to_role(role_admin, pv)
 
     def security_cleanup(self, baseviews, menus):
         """
@@ -1509,7 +1509,7 @@ class BaseSecurityManager:
         :param baseviews: A list of BaseViews class
         :param menus: Menu class
         """
-        viewsmenus = self.get_all_view_menu()
+        viewsmenus = self.get_all_resources()
         roles = self.get_all_roles()
         for viewmenu in viewsmenus:
             found = False
@@ -1520,11 +1520,11 @@ class BaseSecurityManager:
             if menus.find(viewmenu.name):
                 found = True
             if not found:
-                permissions = self.find_permissions_view_menu(viewmenu)
+                permissions = self.get_resource_permissions(viewmenu)
                 for permission in permissions:
                     for role in roles:
-                        self.del_permission_role(role, permission)
-                    self.del_permission_view_menu(
+                        self.remove_permission_from_role(role, permission)
+                    self.delete_permission(
                         permission.permission.name, viewmenu.name
                     )
                 self.del_view_menu(viewmenu.name)
@@ -1680,263 +1680,21 @@ class BaseSecurityManager:
                 if not new_pvm_states:
                     continue
                 for new_pvm_state in new_pvm_states:
-                    new_pvm = self.add_permission_view_menu(
+                    new_pvm = self.create_permission(
                         new_pvm_state[1], new_pvm_state[0]
                     )
-                    self.add_permission_role(role, new_pvm)
+                    self.add_permission_to_role(role, new_pvm)
                 if (pvm.view_menu.name, pvm.permission.name) in state_transitions[
                     "del_role_pvm"
                 ]:
-                    self.del_permission_role(role, pvm)
+                    self.remove_permission_from_role(role, pvm)
         for pvm in state_transitions["del_role_pvm"]:
-            self.del_permission_view_menu(pvm[1], pvm[0], cascade=False)
+            self.delete_permission(pvm[1], pvm[0], cascade=False)
         for view_name in state_transitions["del_views"]:
             self.del_view_menu(view_name)
         for permission_name in state_transitions["del_perms"]:
-            self.del_permission(permission_name)
+            self.delete_action(permission_name)
         return state_transitions
-
-    """
-     ---------------------------
-     INTERFACE ABSTRACT METHODS
-     ---------------------------
-
-     ---------------------
-     PRIMITIVES FOR USERS
-    ----------------------
-    """
-
-    def find_register_user(self, registration_hash):
-        """
-            Generic function to return user registration
-        """
-        raise NotImplementedError
-
-    def add_register_user(
-        self, username, first_name, last_name, email, password="", hashed_password=""
-    ):
-        """
-            Generic function to add user registration
-        """
-        raise NotImplementedError
-
-    def del_register_user(self, register_user):
-        """
-            Generic function to delete user registration
-        """
-        raise NotImplementedError
-
-    def get_user_by_id(self, pk):
-        """
-            Generic function to return user by it's id (pk)
-        """
-        raise NotImplementedError
-
-    def find_user(self, username=None, email=None):
-        """
-            Generic function find a user by it's username or email
-        """
-        raise NotImplementedError
-
-    def get_all_users(self):
-        """
-            Generic function that returns all existing users
-        """
-        raise NotImplementedError
-
-    def get_db_role_permissions(self, role_id: int) -> List[object]:
-        """
-        Get all DB permissions from a role id
-        """
-        raise NotImplementedError
-
-    def add_user(self, username, first_name, last_name, email, role, password=""):
-        """
-            Generic function to create user
-        """
-        raise NotImplementedError
-
-    def update_user(self, user):
-        """
-            Generic function to update user
-
-            :param user: User model to update to database
-        """
-        raise NotImplementedError
-
-    def count_users(self):
-        """
-            Generic function to count the existing users
-        """
-        raise NotImplementedError
-
-    """
-    ----------------------
-     PRIMITIVES FOR ROLES
-    ----------------------
-    """
-
-    def find_role(self, name):
-        raise NotImplementedError
-
-    def add_role(self, name):
-        raise NotImplementedError
-
-    def update_role(self, pk, name):
-        raise NotImplementedError
-
-    def get_all_roles(self):
-        raise NotImplementedError
-
-    """
-    ----------------------------
-     PRIMITIVES FOR PERMISSIONS
-    ----------------------------
-    """
-
-    def get_public_role(self):
-        """
-            returns all permissions from public role
-        """
-        raise NotImplementedError
-
-    def get_public_permissions(self):
-        """
-            returns all permissions from public role
-        """
-        raise NotImplementedError
-
-    def find_permission(self, name):
-        """
-            Finds and returns a Permission by name
-        """
-        raise NotImplementedError
-
-    def find_roles_permission_view_menus(
-        self, permission_name: str, role_ids: List[int]
-    ):
-        raise NotImplementedError
-
-    def exist_permission_on_roles(
-        self, view_name: str, permission_name: str, role_ids: List[int]
-    ) -> bool:
-        """
-            Finds and returns permission views for a group of roles
-        """
-        raise NotImplementedError
-
-    def add_permission(self, name):
-        """
-            Adds a permission to the backend, model permission
-
-            :param name:
-                name of the permission: 'can_add','can_edit' etc...
-        """
-        raise NotImplementedError
-
-    def del_permission(self, name):
-        """
-            Deletes a permission from the backend, model permission
-
-            :param name:
-                name of the permission: 'can_add','can_edit' etc...
-        """
-        raise NotImplementedError
-
-    """
-    ----------------------
-     PRIMITIVES VIEW MENU
-    ----------------------
-    """
-
-    def find_view_menu(self, name):
-        """
-            Finds and returns a ViewMenu by name
-        """
-        raise NotImplementedError
-
-    def get_all_view_menu(self):
-        raise NotImplementedError
-
-    def add_view_menu(self, name):
-        """
-            Adds a view or menu to the backend, model view_menu
-            param name:
-                name of the view menu to add
-        """
-        raise NotImplementedError
-
-    def del_view_menu(self, name):
-        """
-            Deletes a ViewMenu from the backend
-
-            :param name:
-                name of the ViewMenu
-        """
-        raise NotImplementedError
-
-    """
-    ----------------------
-     PERMISSION VIEW MENU
-    ----------------------
-    """
-
-    def find_permission_view_menu(self, permission_name, view_menu_name):
-        """
-            Finds and returns a PermissionView by names
-        """
-        raise NotImplementedError
-
-    def find_permissions_view_menu(self, view_menu):
-        """
-            Finds all permissions from ViewMenu, returns list of PermissionView
-
-            :param view_menu: ViewMenu object
-            :return: list of PermissionView objects
-        """
-        raise NotImplementedError
-
-    def add_permission_view_menu(self, permission_name, view_menu_name):
-        """
-            Adds a permission on a view or menu to the backend
-
-            :param permission_name:
-                name of the permission to add: 'can_add','can_edit' etc...
-            :param view_menu_name:
-                name of the view menu to add
-        """
-        raise NotImplementedError
-
-    def del_permission_view_menu(self, permission_name, view_menu_name, cascade=True):
-        raise NotImplementedError
-
-    def exist_permission_on_views(self, lst, item):
-        raise NotImplementedError
-
-    def exist_permission_on_view(self, lst, permission, view_menu):
-        raise NotImplementedError
-
-    def add_permission_role(self, role, perm_view):
-        """
-            Add permission-ViewMenu object to Role
-
-            :param role:
-                The role object
-            :param perm_view:
-                The PermissionViewMenu object
-        """
-        raise NotImplementedError
-
-    def del_permission_role(self, role, perm_view):
-        """
-            Remove permission-ViewMenu object to Role
-
-            :param role:
-                The role object
-            :param perm_view:
-                The PermissionViewMenu object
-        """
-        raise NotImplementedError
 
     def load_user(self, pk):
         return self.get_user_by_id(int(pk))
