@@ -21,7 +21,6 @@ import json
 import logging
 import re
 from typing import Dict, List, Set, Tuple
-from airflow.www.fab_security.backend import AuthBackendDB, AuthBackendLDAP
 
 from flask import g, session, url_for
 from flask_appbuilder.const import (
@@ -64,6 +63,8 @@ from flask_babel import lazy_gettext as _
 from flask_jwt_extended import JWTManager, current_user as current_user_jwt
 from flask_login import LoginManager, current_user
 from werkzeug.security import generate_password_hash
+
+from airflow.www.fab_security.backend import AuthBackendDB, AuthBackendLDAP
 
 log = logging.getLogger(__name__)
 
@@ -255,9 +256,7 @@ class BaseSecurityManager:
                     if fab_role:
                         _roles.add(fab_role)
                     else:
-                        log.warning(
-                            f"Can't find role specified in AUTH_ROLES_MAPPING: {fab_role_name}"
-                        )
+                        log.warning(f"Can't find role specified in AUTH_ROLES_MAPPING: {fab_role_name}")
         return _roles
 
     @property

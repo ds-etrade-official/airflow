@@ -1,4 +1,21 @@
-from werkzeug.security import check_password_hash
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+import logging
 from typing import Dict, List, Set, Tuple
 
 from flask_appbuilder.const import (
@@ -8,13 +25,12 @@ from flask_appbuilder.const import (
     LOGMSG_WAR_SEC_LOGIN_FAILED,
     LOGMSG_WAR_SEC_NOLDAP_OBJ,
 )
+from werkzeug.security import check_password_hash
 
-import logging
 log = logging.getLogger(__name__)
 
 
 class AuthBackendDB:
-
     def __init__(self, security_manager):
         self.security_manager = security_manager
 
@@ -51,15 +67,12 @@ class AuthBackendDB:
 
 
 class AuthBackendLDAP:
-
     def __init__(self, app, security_manager):
         self.app = app
         self.security_manager = security_manager
 
         if "AUTH_LDAP_SERVER" not in app.config:
-            raise Exception(
-                "No AUTH_LDAP_SERVER defined on config" " with AUTH_LDAP authentication type."
-            )
+            raise Exception("No AUTH_LDAP_SERVER defined on config" " with AUTH_LDAP authentication type.")
         app.config.setdefault("AUTH_LDAP_SEARCH", "")
         app.config.setdefault("AUTH_LDAP_SEARCH_FILTER", "")
         app.config.setdefault("AUTH_LDAP_APPEND_DOMAIN", "")
@@ -176,7 +189,9 @@ class AuthBackendLDAP:
         # build the filter string for the LDAP search
         if self.security_manager.auth_ldap_search_filter:
             filter_str = "(&{}({}={}))".format(
-                self.security_manager.auth_ldap_search_filter, self.security_manager.auth_ldap_uid_field, username
+                self.security_manager.auth_ldap_search_filter,
+                self.security_manager.auth_ldap_uid_field,
+                username,
             )
         else:
             filter_str = f"({self.security_manager.auth_ldap_uid_field}={username})"
@@ -230,7 +245,9 @@ class AuthBackendLDAP:
 
         # apply AUTH_ROLES_MAPPING
         if len(self.security_manager.auth_roles_mapping) > 0:
-            user_role_keys = self.security_manager.ldap_extract_list(user_attributes, self.security_manager.auth_ldap_group_field)
+            user_role_keys = self.security_manager.ldap_extract_list(
+                user_attributes, self.security_manager.auth_ldap_group_field
+            )
             user_role_objects.update(self.security_manager.get_roles_from_keys(user_role_keys))
 
         # apply AUTH_USER_REGISTRATION
@@ -258,8 +275,12 @@ class AuthBackendLDAP:
 
         try:
             log.debug(f"LDAP bind indirect TRY with username: '{self.security_manager.auth_ldap_bind_user}'")
-            con.simple_bind_s(self.security_manager.auth_ldap_bind_user, self.security_manager.auth_ldap_bind_password)
-            log.debug(f"LDAP bind indirect SUCCESS with username: '{self.security_manager.auth_ldap_bind_user}'")
+            con.simple_bind_s(
+                self.security_manager.auth_ldap_bind_user, self.security_manager.auth_ldap_bind_password
+            )
+            log.debug(
+                f"LDAP bind indirect SUCCESS with username: '{self.security_manager.auth_ldap_bind_user}'"
+            )
         except ldap.INVALID_CREDENTIALS as ex:
             log.error(
                 "AUTH_LDAP_BIND_USER and AUTH_LDAP_BIND_PASSWORD are" " not valid LDAP bind credentials"
@@ -440,8 +461,12 @@ class AuthBackendLDAP:
             if (not user) and user_attributes and self.security_manager.auth_user_registration:
                 user = self.security_manager.add_user(
                     username=username,
-                    first_name=self.security_manager.ldap_extract(user_attributes, self.security_manager.auth_ldap_firstname_field, ""),
-                    last_name=self.security_manager.ldap_extract(user_attributes, self.security_manager.auth_ldap_lastname_field, ""),
+                    first_name=self.security_manager.ldap_extract(
+                        user_attributes, self.security_manager.auth_ldap_firstname_field, ""
+                    ),
+                    last_name=self.security_manager.ldap_extract(
+                        user_attributes, self.security_manager.auth_ldap_lastname_field, ""
+                    ),
                     email=self.security_manager.ldap_extract(
                         user_attributes,
                         self.security_manager.auth_ldap_email_field,
