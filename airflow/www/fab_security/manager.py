@@ -15,9 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import base64
 import datetime
-import json
 import logging
 import re
 from typing import Dict, List, Set, Tuple
@@ -64,7 +62,7 @@ from flask_jwt_extended import JWTManager, current_user as current_user_jwt
 from flask_login import LoginManager, current_user
 from werkzeug.security import generate_password_hash
 
-from airflow.www.fab_security.backend import AuthBackendDB, AuthBackendLDAP
+from airflow.www.fab_security.backend import AuthBackendDB, AuthBackendLDAP, AuthBackendOAuth, AuthBackendOpenID
 
 log = logging.getLogger(__name__)
 
@@ -94,16 +92,6 @@ class BaseSecurityManager:
     """ Flask-JWT-Extended """
     oid = None
     """ Flask-OpenID OpenID """
-    oauth = None
-    """ Flask-OAuth """
-    oauth_remotes = None
-    """ OAuth email whitelists """
-    oauth_whitelists = {}
-    """ Initialized (remote_app) providers dict {'provider_name', OBJ } """
-    oauth_tokengetter = _oauth_tokengetter
-    """ OAuth tokengetter function override to implement your own tokengetter method """
-    oauth_user_info = None
-
     user_model = None
     """ Override to set your own User Model """
     role_model = None
@@ -116,6 +104,16 @@ class BaseSecurityManager:
     """ Override to set your own PermissionView Model """
     registeruser_model = None
     """ Override to set your own RegisterUser Model """
+
+    oauth = None
+    """ Flask-OAuth """
+    oauth_remotes = None
+    """ OAuth email whitelists """
+    oauth_whitelists = {}
+    """ Initialized (remote_app) providers dict {'provider_name', OBJ } """
+    oauth_tokengetter = _oauth_tokengetter
+    """ OAuth tokengetter function override to implement your own tokengetter method """
+    oauth_user_info = None
 
     userdbmodelview = UserDBModelView
     """ Override if you want your own user db view """
@@ -182,27 +180,12 @@ class BaseSecurityManager:
         # LDAP Config
         if self.auth_type == AUTH_LDAP:
             self.backend = AuthBackendLDAP(app, self)
-
         if self.auth_type == AUTH_OID:
-            from flask_openid import OpenID
-
-            self.oid = OpenID(app)
+            self.backend = AuthBackendOpenID(app, self)
         if self.auth_type == AUTH_OAUTH:
-            from authlib.integrations.flask_client import OAuth
-
-            self.oauth = OAuth(app)
-            self.oauth_remotes = dict()
-            for _provider in self.oauth_providers:
-                provider_name = _provider["name"]
-                log.debug(f"OAuth providers init {provider_name}")
-                obj_provider = self.oauth.register(provider_name, **_provider["remote_app"])
-                obj_provider._tokengetter = self.oauth_tokengetter
-                if not self.oauth_user_info:
-                    self.oauth_user_info = self.get_oauth_user_info
-                # Whitelist only users with matching emails
-                if "whitelist" in _provider:
-                    self.oauth_whitelists[provider_name] = _provider["whitelist"]
-                self.oauth_remotes[provider_name] = obj_provider
+            self.backend = AuthBackendOAuth(app, self)
+        if self.auth_type == AUTH_DB:
+            self.backend = AuthBackendDB(app, self)
 
         self._builtin_roles = self.create_builtin_roles()
         # Setup Flask-Login
@@ -261,6 +244,7 @@ class BaseSecurityManager:
 
     @property
     def get_url_for_registeruser(self):
+        # TODO: Maybe delete?
         return url_for(f"{self.registeruser_view.endpoint}.{self.registeruser_view.default_view}")
 
     @property
@@ -300,10 +284,6 @@ class BaseSecurityManager:
         return self.appbuilder.get_app.config["AUTH_USER_REGISTRATION_ROLE"]
 
     @property
-    def auth_user_registration_role_jmespath(self) -> str:
-        return self.appbuilder.get_app.config["AUTH_USER_REGISTRATION_ROLE_JMESPATH"]
-
-    @property
     def auth_roles_mapping(self) -> Dict[str, List[str]]:
         return self.appbuilder.get_app.config["AUTH_ROLES_MAPPING"]
 
@@ -316,161 +296,11 @@ class BaseSecurityManager:
         return self.appbuilder.get_app.config["OPENID_PROVIDERS"]
 
     @property
-    def oauth_providers(self):
-        return self.appbuilder.get_app.config["OAUTH_PROVIDERS"]
-
-    @property
     def current_user(self):
         if current_user.is_authenticated:
             return g.user
         elif current_user_jwt:
             return current_user_jwt
-
-    def get_oauth_token_key_name(self, provider):
-        """
-        Returns the token_key name for the oauth provider
-        if none is configured defaults to oauth_token
-        this is configured using OAUTH_PROVIDERS and token_key key.
-        """
-        for _provider in self.oauth_providers:
-            if _provider["name"] == provider:
-                return _provider.get("token_key", "oauth_token")
-
-    def get_oauth_token_secret_name(self, provider):
-        """
-        Returns the token_secret name for the oauth provider
-        if none is configured defaults to oauth_secret
-        this is configured using OAUTH_PROVIDERS and token_secret
-        """
-        for _provider in self.oauth_providers:
-            if _provider["name"] == provider:
-                return _provider.get("token_secret", "oauth_token_secret")
-
-    def set_oauth_session(self, provider, oauth_response):
-        """
-        Set the current session with OAuth user secrets
-        """
-        # Get this provider key names for token_key and token_secret
-        token_key = self.appbuilder.sm.get_oauth_token_key_name(provider)
-        token_secret = self.appbuilder.sm.get_oauth_token_secret_name(provider)
-        # Save users token on encrypted session cookie
-        session["oauth"] = (
-            oauth_response[token_key],
-            oauth_response.get(token_secret, ""),
-        )
-        session["oauth_provider"] = provider
-
-    def get_oauth_user_info(self, provider, resp):
-        """
-        Since there are different OAuth API's with different ways to
-        retrieve user info
-        """
-        # for GITHUB
-        if provider == "github" or provider == "githublocal":
-            me = self.appbuilder.sm.oauth_remotes[provider].get("user")
-            data = me.json()
-            log.debug(f"User info from Github: {data}")
-            return {"username": "github_" + data.get("login")}
-        # for twitter
-        if provider == "twitter":
-            me = self.appbuilder.sm.oauth_remotes[provider].get("account/settings.json")
-            data = me.json()
-            log.debug(f"User info from Twitter: {data}")
-            return {"username": "twitter_" + data.get("screen_name", "")}
-        # for linkedin
-        if provider == "linkedin":
-            me = self.appbuilder.sm.oauth_remotes[provider].get(
-                "people/~:(id,email-address,first-name,last-name)?format=json"
-            )
-            data = me.json()
-            log.debug(f"User info from Linkedin: {data}")
-            return {
-                "username": "linkedin_" + data.get("id", ""),
-                "email": data.get("email-address", ""),
-                "first_name": data.get("firstName", ""),
-                "last_name": data.get("lastName", ""),
-            }
-        # for Google
-        if provider == "google":
-            me = self.appbuilder.sm.oauth_remotes[provider].get("userinfo")
-            data = me.json()
-            log.debug(f"User info from Google: {data}")
-            return {
-                "username": "google_" + data.get("id", ""),
-                "first_name": data.get("given_name", ""),
-                "last_name": data.get("family_name", ""),
-                "email": data.get("email", ""),
-            }
-        # for Azure AD Tenant. Azure OAuth response contains
-        # JWT token which has user info.
-        # JWT token needs to be base64 decoded.
-        # https://docs.microsoft.com/en-us/azure/active-directory/develop/
-        # active-directory-protocols-oauth-code
-        if provider == "azure":
-            log.debug(f"Azure response received : {resp}")
-            id_token = resp["id_token"]
-            log.debug(str(id_token))
-            me = self._azure_jwt_token_parse(id_token)
-            log.debug(f"Parse JWT token : {me}")
-            return {
-                "name": me.get("name", ""),
-                "email": me["upn"],
-                "first_name": me.get("given_name", ""),
-                "last_name": me.get("family_name", ""),
-                "id": me["oid"],
-                "username": me["oid"],
-            }
-        # for OpenShift
-        if provider == "openshift":
-            me = self.appbuilder.sm.oauth_remotes[provider].get("apis/user.openshift.io/v1/users/~")
-            data = me.json()
-            log.debug(f"User info from OpenShift: {data}")
-            return {"username": "openshift_" + data.get("metadata").get("name")}
-        # for Okta
-        if provider == "okta":
-            me = self.appbuilder.sm.oauth_remotes[provider].get("userinfo")
-            data = me.json()
-            log.debug("User info from Okta: %s", data)
-            return {
-                "username": "okta_" + data.get("sub", ""),
-                "first_name": data.get("given_name", ""),
-                "last_name": data.get("family_name", ""),
-                "email": data.get("email", ""),
-                "role_keys": data.get("groups", []),
-            }
-        else:
-            return {}
-
-    def _azure_parse_jwt(self, id_token):
-        jwt_token_parts = r"^([^\.\s]*)\.([^\.\s]+)\.([^\.\s]*)$"
-        matches = re.search(jwt_token_parts, id_token)
-        if not matches or len(matches.groups()) < 3:
-            log.error("Unable to parse token.")
-            return {}
-        return {
-            "header": matches.group(1),
-            "Payload": matches.group(2),
-            "Sig": matches.group(3),
-        }
-
-    def _azure_jwt_token_parse(self, id_token):
-        jwt_split_token = self._azure_parse_jwt(id_token)
-        if not jwt_split_token:
-            return
-
-        jwt_payload = jwt_split_token["Payload"]
-        # Prepare for base64 decoding
-        payload_b64_string = jwt_payload
-        payload_b64_string += "=" * (4 - (len(jwt_payload) % 4))
-        decoded_payload = base64.urlsafe_b64decode(payload_b64_string.encode("ascii"))
-
-        if not decoded_payload:
-            log.error("Payload of id_token could not be base64 url decoded.")
-            return
-
-        jwt_decoded_payload = json.loads(decoded_payload.decode("utf-8"))
-
-        return jwt_decoded_payload
 
     def register_views(self):
         if not self.appbuilder.app.config.get("FAB_ADD_SECURITY_VIEWS", True):
@@ -636,8 +466,7 @@ class BaseSecurityManager:
         :param password:
             The password, will be tested against hashed password on db
         """
-        backend = AuthBackendDB(app, self)
-        return backend.auth_user_db(username, password)
+        return self.backend.auth_user_db(username, password)
 
     def auth_user_oid(self, email):
         """
@@ -683,99 +512,6 @@ class BaseSecurityManager:
 
         self.update_user_auth_stat(user)
         return user
-
-    def _oauth_calculate_user_roles(self, userinfo) -> List[str]:
-        user_role_objects = set()
-
-        # apply AUTH_ROLES_MAPPING
-        if len(self.auth_roles_mapping) > 0:
-            user_role_keys = userinfo.get("role_keys", [])
-            user_role_objects.update(self.get_roles_from_keys(user_role_keys))
-
-        # apply AUTH_USER_REGISTRATION_ROLE
-        if self.auth_user_registration:
-            registration_role_name = self.auth_user_registration_role
-
-            # if AUTH_USER_REGISTRATION_ROLE_JMESPATH is set,
-            # use it for the registration role
-            if self.auth_user_registration_role_jmespath:
-                import jmespath
-
-                registration_role_name = jmespath.search(self.auth_user_registration_role_jmespath, userinfo)
-
-            # lookup registration role in flask db
-            fab_role = self.find_role(registration_role_name)
-            if fab_role:
-                user_role_objects.add(fab_role)
-            else:
-                log.warning(f"Can't find AUTH_USER_REGISTRATION role: {registration_role_name}")
-
-        return list(user_role_objects)
-
-    def auth_user_oauth(self, userinfo):
-        """
-        Method for authenticating user with OAuth.
-
-        :userinfo: dict with user information
-                   (keys are the same as User model columns)
-        """
-        # extract the username from `userinfo`
-        if "username" in userinfo:
-            username = userinfo["username"]
-        elif "email" in userinfo:
-            username = userinfo["email"]
-        else:
-            log.error(f"OAUTH userinfo does not have username or email {userinfo}")
-            return None
-
-        # If username is empty, go away
-        if (username is None) or username == "":
-            return None
-
-        # Search the DB for this user
-        user = self.find_user(username=username)
-
-        # If user is not active, go away
-        if user and (not user.is_active):
-            return None
-
-        # If user is not registered, and not self-registration, go away
-        if (not user) and (not self.auth_user_registration):
-            return None
-
-        # Sync the user's roles
-        if user and self.auth_roles_sync_at_login:
-            user.roles = self._oauth_calculate_user_roles(userinfo)
-            log.debug(f"Calculated new roles for user='{username}' as: {user.roles}")
-
-        # If the user is new, register them
-        if (not user) and self.auth_user_registration:
-            user = self.add_user(
-                username=username,
-                first_name=userinfo.get("first_name", ""),
-                last_name=userinfo.get("last_name", ""),
-                email=userinfo.get("email", "") or f"{username}@email.notfound",
-                role=self._oauth_calculate_user_roles(userinfo),
-            )
-            log.debug(f"New user registered: {user}")
-
-            # If user registration failed, go away
-            if not user:
-                log.error(f"Error creating a new OAuth user {username}")
-                return None
-
-        # LOGIN SUCCESS (only if user is now registered)
-        if user:
-            self.update_user_auth_stat(user)
-            return user
-        else:
-            return None
-
-    """
-        ----------------------------------------
-            PERMISSION ACCESS CHECK
-        ----------------------------------------
-    """
 
     def is_item_public(self, permission_name, view_name):
         """

@@ -15,7 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import base64
+import json
 import logging
+import re
+
+from flask import g, session, url_for
+from flask_openid import OpenID
+
 from typing import Dict, List, Set, Tuple
 
 from flask_appbuilder.const import (
@@ -31,7 +38,8 @@ log = logging.getLogger(__name__)
 
 
 class AuthBackendDB:
-    def __init__(self, security_manager):
+    def __init__(self, app, security_manager):
+        self.app = app
         self.security_manager = security_manager
 
     def auth_user_db(self, username, password):
@@ -96,83 +104,83 @@ class AuthBackendLDAP:
 
     @property
     def auth_ldap_server(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_SERVER"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_SERVER"]
 
     @property
     def auth_ldap_use_tls(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_USE_TLS"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_USE_TLS"]
 
     @property
     def auth_ldap_search(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_SEARCH"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_SEARCH"]
 
     @property
     def auth_ldap_search_filter(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_SEARCH_FILTER"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_SEARCH_FILTER"]
 
     @property
     def auth_ldap_bind_user(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_BIND_USER"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_BIND_USER"]
 
     @property
     def auth_ldap_bind_password(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_BIND_PASSWORD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_BIND_PASSWORD"]
 
     @property
     def auth_ldap_append_domain(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_APPEND_DOMAIN"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_APPEND_DOMAIN"]
 
     @property
     def auth_ldap_username_format(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_USERNAME_FORMAT"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_USERNAME_FORMAT"]
 
     @property
     def auth_ldap_uid_field(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_UID_FIELD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_UID_FIELD"]
 
     @property
     def auth_ldap_group_field(self) -> str:
-        return self.appbuilder.get_app.config["AUTH_LDAP_GROUP_FIELD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_GROUP_FIELD"]
 
     @property
     def auth_ldap_firstname_field(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_FIRSTNAME_FIELD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_FIRSTNAME_FIELD"]
 
     @property
     def auth_ldap_lastname_field(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_LASTNAME_FIELD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_LASTNAME_FIELD"]
 
     @property
     def auth_ldap_email_field(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_EMAIL_FIELD"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_EMAIL_FIELD"]
 
     @property
     def auth_ldap_bind_first(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_BIND_FIRST"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_BIND_FIRST"]
 
     @property
     def auth_ldap_allow_self_signed(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_ALLOW_SELF_SIGNED"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_ALLOW_SELF_SIGNED"]
 
     @property
     def auth_ldap_tls_demand(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_TLS_DEMAND"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_TLS_DEMAND"]
 
     @property
     def auth_ldap_tls_cacertdir(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_TLS_CACERTDIR"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_TLS_CACERTDIR"]
 
     @property
     def auth_ldap_tls_cacertfile(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_TLS_CACERTFILE"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_TLS_CACERTFILE"]
 
     @property
     def auth_ldap_tls_certfile(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_TLS_CERTFILE"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_TLS_CERTFILE"]
 
     @property
     def auth_ldap_tls_keyfile(self):
-        return self.appbuilder.get_app.config["AUTH_LDAP_TLS_KEYFILE"]
+        return self.security_manager.appbuilder.get_app.config["AUTH_LDAP_TLS_KEYFILE"]
 
     def _search_ldap(self, ldap, con, username):
         """
@@ -498,3 +506,276 @@ class AuthBackendLDAP:
             else:
                 log.error(e)
                 return None
+
+
+
+class AuthBackendOAuth:
+
+    def __init__(self, app, security_manager):
+        self.app = app
+        self.security_manager = security_manager
+
+        from authlib.integrations.flask_client import OAuth
+
+        self.security_manager.oauth = OAuth(app)
+        self.security_manager.oauth_remotes = dict()
+
+        for _provider in self.security_manager.oauth_providers:
+            provider_name = _provider["name"]
+            log.debug(f"OAuth providers init {provider_name}")
+            obj_provider = self.security_manager.oauth.register(provider_name, **_provider["remote_app"])
+            obj_provider._tokengetter = self.security_manager.oauth_tokengetter
+            if not self.security_manager.oauth_user_info:
+                self.security_manager.oauth_user_info = self.get_oauth_user_info
+            # Whitelist only users with matching emails
+            if "whitelist" in _provider:
+                self.security_manager.oauth_whitelists[provider_name] = _provider["whitelist"]
+            self.security_manager.oauth_remotes[provider_name] = obj_provider
+
+    @property
+    def oauth_providers(self):
+        return self.security_manager.appbuilder.get_app.config["OAUTH_PROVIDERS"]
+
+    @property
+    def auth_user_registration_role_jmespath(self) -> str:
+        return self.appbuilder.get_app.config["AUTH_USER_REGISTRATION_ROLE_JMESPATH"]
+
+    def get_oauth_token_key_name(self, provider):
+        """
+        Returns the token_key name for the oauth provider
+        if none is configured defaults to oauth_token
+        this is configured using OAUTH_PROVIDERS and token_key key.
+        """
+        for _provider in self.security_manager.oauth_providers:
+            if _provider["name"] == provider:
+                return _provider.get("token_key", "oauth_token")
+
+    def get_oauth_token_secret_name(self, provider):
+        """
+        Returns the token_secret name for the oauth provider
+        if none is configured defaults to oauth_secret
+        this is configured using OAUTH_PROVIDERS and token_secret
+        """
+        for _provider in self.security_manager.oauth_providers:
+            if _provider["name"] == provider:
+                return _provider.get("token_secret", "oauth_token_secret")
+
+    def set_oauth_session(self, provider, oauth_response):
+        """
+        Set the current session with OAuth user secrets
+        """
+        # Get this provider key names for token_key and token_secret
+        token_key = self.security_manager.get_oauth_token_key_name(provider)
+        token_secret = self.security_manager.get_oauth_token_secret_name(provider)
+        # Save users token on encrypted session cookie
+        session["oauth"] = (
+            oauth_response[token_key],
+            oauth_response.get(token_secret, ""),
+        )
+        session["oauth_provider"] = provider
+
+    def get_oauth_user_info(self, provider, resp):
+        """
+        Since there are different OAuth API's with different ways to
+        retrieve user info
+        """
+        # for GITHUB
+        if provider == "github" or provider == "githublocal":
+            me = self.security_manager.oauth_remotes[provider].get("user")
+            data = me.json()
+            log.debug(f"User info from Github: {data}")
+            return {"username": "github_" + data.get("login")}
+        # for twitter
+        if provider == "twitter":
+            me = self.security_manager.oauth_remotes[provider].get("account/settings.json")
+            data = me.json()
+            log.debug(f"User info from Twitter: {data}")
+            return {"username": "twitter_" + data.get("screen_name", "")}
+        # for linkedin
+        if provider == "linkedin":
+            me = self.security_manager.oauth_remotes[provider].get(
+                "people/~:(id,email-address,first-name,last-name)?format=json"
+            )
+            data = me.json()
+            log.debug(f"User info from Linkedin: {data}")
+            return {
+                "username": "linkedin_" + data.get("id", ""),
+                "email": data.get("email-address", ""),
+                "first_name": data.get("firstName", ""),
+                "last_name": data.get("lastName", ""),
+            }
+        # for Google
+        if provider == "google":
+            me = self.security_manager.oauth_remotes[provider].get("userinfo")
+            data = me.json()
+            log.debug(f"User info from Google: {data}")
+            return {
+                "username": "google_" + data.get("id", ""),
+                "first_name": data.get("given_name", ""),
+                "last_name": data.get("family_name", ""),
+                "email": data.get("email", ""),
+            }
+        # for Azure AD Tenant. Azure OAuth response contains
+        # JWT token which has user info.
+        # JWT token needs to be base64 decoded.
+        # https://docs.microsoft.com/en-us/azure/active-directory/develop/
+        # active-directory-protocols-oauth-code
+        if provider == "azure":
+            log.debug(f"Azure response received : {resp}")
+            id_token = resp["id_token"]
+            log.debug(str(id_token))
+            me = self._azure_jwt_token_parse(id_token)
+            log.debug(f"Parse JWT token : {me}")
+            return {
+                "name": me.get("name", ""),
+                "email": me["upn"],
+                "first_name": me.get("given_name", ""),
+                "last_name": me.get("family_name", ""),
+                "id": me["oid"],
+                "username": me["oid"],
+            }
+        # for OpenShift
+        if provider == "openshift":
+            me = self.security_manager.oauth_remotes[provider].get("apis/user.openshift.io/v1/users/~")
+            data = me.json()
+            log.debug(f"User info from OpenShift: {data}")
+            return {"username": "openshift_" + data.get("metadata").get("name")}
+        # for Okta
+        if provider == "okta":
+            me = self.security_manager.oauth_remotes[provider].get("userinfo")
+            data = me.json()
+            log.debug("User info from Okta: %s", data)
+            return {
+                "username": "okta_" + data.get("sub", ""),
+                "first_name": data.get("given_name", ""),
+                "last_name": data.get("family_name", ""),
+                "email": data.get("email", ""),
+                "role_keys": data.get("groups", []),
+            }
+        else:
+            return {}    
+
+    def _oauth_calculate_user_roles(self, userinfo) -> List[str]:
+        user_role_objects = set()
+
+        # apply AUTH_ROLES_MAPPING
+        if len(self.security_manager.auth_roles_mapping) > 0:
+            user_role_keys = userinfo.get("role_keys", [])
+            user_role_objects.update(self.security_manager.get_roles_from_keys(user_role_keys))
+
+        # apply AUTH_USER_REGISTRATION_ROLE
+        if self.security_manager.auth_user_registration:
+            registration_role_name = self.security_manager.auth_user_registration_role
+
+            # if AUTH_USER_REGISTRATION_ROLE_JMESPATH is set,
+            # use it for the registration role
+            if self.auth_user_registration_role_jmespath:
+                import jmespath
+
+                registration_role_name = jmespath.search(self.auth_user_registration_role_jmespath, userinfo)
+
+            # lookup registration role in flask db
+            fab_role = self.security_manager.find_role(registration_role_name)
+            if fab_role:
+                user_role_objects.add(fab_role)
+            else:
+                log.warning(f"Can't find AUTH_USER_REGISTRATION role: {registration_role_name}")
+
+        return list(user_role_objects)
+
+    def auth_user_oauth(self, userinfo):
+        """
+        Method for authenticating user with OAuth.
+
+        :userinfo: dict with user information
+                   (keys are the same as User model columns)
+        """
+        # extract the username from `userinfo`
+        if "username" in userinfo:
+            username = userinfo["username"]
+        elif "email" in userinfo:
+            username = userinfo["email"]
+        else:
+            log.error(f"OAUTH userinfo does not have username or email {userinfo}")
+            return None
+
+        # If username is empty, go away
+        if (username is None) or username == "":
+            return None
+
+        # Search the DB for this user
+        user = self.security_manager.find_user(username=username)
+
+        # If user is not active, go away
+        if user and (not user.is_active):
+            return None
+
+        # If user is not registered, and not self-registration, go away
+        if (not user) and (not self.security_manager.auth_user_registration):
+            return None
+
+        # Sync the user's roles
+        if user and self.security_manager.auth_roles_sync_at_login:
+            user.roles = self._oauth_calculate_user_roles(userinfo)
+            log.debug(f"Calculated new roles for user='{username}' as: {user.roles}")
+
+        # If the user is new, register them
+        if (not user) and self.security_manager.auth_user_registration:
+            user = self.security_manager.add_user(
+                username=username,
+                first_name=userinfo.get("first_name", ""),
+                last_name=userinfo.get("last_name", ""),
+                email=userinfo.get("email", "") or f"{username}@email.notfound",
+                role=self._oauth_calculate_user_roles(userinfo),
+            )
+            log.debug(f"New user registered: {user}")
+
+            # If user registration failed, go away
+            if not user:
+                log.error(f"Error creating a new OAuth user {username}")
+                return None
+
+        # LOGIN SUCCESS (only if user is now registered)
+        if user:
+            self.security_manager.update_user_auth_stat(user)
+            return user
+        else:
+            return None
+
+    def _azure_parse_jwt(self, id_token):
+        jwt_token_parts = r"^([^\.\s]*)\.([^\.\s]+)\.([^\.\s]*)$"
+        matches = re.search(jwt_token_parts, id_token)
+        if not matches or len(matches.groups()) < 3:
+            log.error("Unable to parse token.")
+            return {}
+        return {
+            "header": matches.group(1),
+            "Payload": matches.group(2),
+            "Sig": matches.group(3),
+        }
+
+    def _azure_jwt_token_parse(self, id_token):
+        jwt_split_token = self._azure_parse_jwt(id_token)
+        if not jwt_split_token:
+            return
+
+        jwt_payload = jwt_split_token["Payload"]
+        # Prepare for base64 decoding
+        payload_b64_string = jwt_payload
+        payload_b64_string += "=" * (4 - (len(jwt_payload) % 4))
+        decoded_payload = base64.urlsafe_b64decode(payload_b64_string.encode("ascii"))
+
+        if not decoded_payload:
+            log.error("Payload of id_token could not be base64 url decoded.")
+            return
+
+        jwt_decoded_payload = json.loads(decoded_payload.decode("utf-8"))
+
+        return jwt_decoded_payload
+
+
+class AuthBackendOpenID:
+    def __init__(self, app, security_manager):
+        self.app = app
+        self.security_manager = security_manager
+        self.security_manager.oid = OpenID(app)
