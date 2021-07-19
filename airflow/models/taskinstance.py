@@ -2266,7 +2266,7 @@ STATICA_HACK = True
 globals()['kcah_acitats'[::-1].upper()] = False
 if STATICA_HACK:  # pragma: no cover
 
-    from airflow.job.base_job import BaseJob
+    from airflow.jobs.base_job import BaseJob
     from airflow.models.dagrun import DagRun
 
     TaskInstance.dag_run = relationship(DagRun)

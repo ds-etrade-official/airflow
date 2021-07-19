@@ -32,11 +32,11 @@ class TestTriggererCommand(unittest.TestCase):
         cls.parser = cli_parser.get_parser()
 
     @mock.patch("airflow.cli.commands.triggerer_command.TriggererJob")
-    def test_partition_argument(
+    def test_capacity_argument(
         self,
         mock_scheduler_job,
     ):
-        """Ensure that the partition argument is passed correctly"""
-        args = self.parser.parse_args(['triggerer', '--partition=1/2'])
+        """Ensure that the capacity argument is passed correctly"""
+        args = self.parser.parse_args(['triggerer', '--capacity=42'])
         triggerer_command.triggerer(args)
-        mock_scheduler_job.assert_called_once_with(partition="1/2")
+        mock_scheduler_job.assert_called_once_with(capacity="42")

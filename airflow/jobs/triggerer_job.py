@@ -22,7 +22,7 @@ import sys
 import threading
 import time
 from collections import deque
-from typing import Deque, Dict, List, Optional, Set, Tuple, Type
+from typing import Deque, Dict, Set, Tuple, Type
 
 from airflow.compat.asyncio import create_task
 from airflow.jobs.base_job import BaseJob
@@ -46,44 +46,22 @@ class TriggererJob(BaseJob):
 
     __mapper_args__ = {'polymorphic_identity': 'TriggererJob'}
 
-    partition_ids: Optional[List[int]] = None
-    partition_total: Optional[int] = None
-
-    def __init__(self, partition=None, *args, **kwargs):
+    def __init__(self, capacity=None, *args, **kwargs):
         # Make sure we can actually run
         if not hasattr(asyncio, "create_task"):
             raise RuntimeError("The triggerer/deferred operators only work on Python 3.7 and above.")
         # Call superclass
         super().__init__(*args, **kwargs)
-        # Decode partition information
-        self.partition_ids, self.partition_total = None, None
-        if partition:
-            self.partition_ids, self.partition_total = self.decode_partition(partition)
+
+        if capacity is None:
+            self.capacity = 1000  # TODO put this in a config file?
+        elif isinstance(capacity, int) and capacity > 0:
+            self.capacity = capacity
+        else:
+            raise ValueError(f"Capacity number {capacity} is invalid")
+
         # Set up runner async thread
         self.runner = TriggerRunner()
-
-    def decode_partition(self, partition: str) -> Tuple[List[int], int]:
-        """
-        Given a string-format partition specification, returns the list of
-        partition IDs it represents and the partition total.
-        """
-        try:
-            # The partition format is "1,2,3/10" where the numbers before
-            # the slash are the partitions we represent, and the number
-            # after is the total number. Most users will just have a single
-            # partition number, e.g. "2/10".
-            ids_str, total_str = partition.split("/", 1)
-            partition_total = int(total_str)
-            partition_ids = []
-            for id_str in ids_str.split(","):
-                id_number = int(id_str)
-                # Bounds checking (they're 1-indexed, which might catch people out)
-                if id_number <= 0 or id_number > self.partition_total:
-                    raise ValueError(f"Partition number {id_number} is impossible")
-                self.partition_ids.append(id_number)
-        except (ValueError, TypeError):
-            raise ValueError(f"Invalid partition specification: {partition}")
-        return partition_ids, partition_total
 
     def register_signals(self) -> None:
         """Register signals that stop child processes"""
@@ -101,18 +79,7 @@ class TriggererJob(BaseJob):
             sys.exit(os.EX_SOFTWARE)
 
     def _execute(self) -> None:
-        # Display custom startup ack depending on plurality of partitions
-        if self.partition_ids is None:
-            self.log.info("Starting the triggerer")
-        elif len(self.partition_ids) == 1:
-            self.log.info(
-                "Starting the triggerer (partition %s of %s)", self.partition_ids[0], self.partition_total
-            )
-        else:
-            self.log.info(
-                "Starting the triggerer (partitions %s of %s)", self.partition_ids, self.partition_total
-            )
-
+        self.log.info("Starting the triggerer")
         try:
             # Kick off runner thread
             self.runner.start()
@@ -154,7 +121,7 @@ class TriggererJob(BaseJob):
         adds them to our runner, and then removes ones from it we no longer
         need.
         """
-        Trigger.assign_unassigned(self.id, 1000)
+        Trigger.assign_unassigned(self.id, self.capacity)
         ids = Trigger.ids_for_triggerer(self.id)
         self.runner.update_triggers(set(ids))
 

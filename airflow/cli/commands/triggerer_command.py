@@ -31,7 +31,7 @@ from airflow.utils.cli import setup_locations, setup_logging, sigint_handler, si
 def triggerer(args):
     """Starts Airflow Triggerer"""
     print(settings.HEADER)
-    job = TriggererJob(partition=args.partition)
+    job = TriggererJob(capacity=args.capacity)
 
     if args.daemon:
         pid, stdout, stderr, log_file = setup_locations(

@@ -735,10 +735,10 @@ ARG_INCLUDE_DAGS = Arg(
 )
 
 # triggerer
-ARG_PARTITION = Arg(
-    ("--partition",),
+ARG_CAPACITY = Arg(
+    ("--capacity",),
     type=str,
-    help="The partition specification for this instance, in the form 'partition_num/total_partitions'",
+    help="The maximum number of triggers that a Triggerer will run at one time.",
 )
 
 ALTERNATIVE_CONN_SPECS_ARGS = [
@@ -1545,7 +1545,7 @@ airflow_commands: List[CLICommand] = [
             ARG_STDOUT,
             ARG_STDERR,
             ARG_LOG_FILE,
-            ARG_PARTITION,
+            ARG_CAPACITY,
         ),
     ),
     ActionCommand(

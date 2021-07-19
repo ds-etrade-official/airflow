@@ -69,26 +69,32 @@ def test_is_alive():
     assert not triggerer_job.is_alive(), "Completed jobs even with recent heartbeat should not be alive"
 
 
-# def test_partition_decode():
-#     """
-#     Tests that TriggererJob can decode the various different kinds of partition
-#     arguments that it can be passed.
-#     """
-#     # Positive cases
-#     variants = [
-#         (None, (None, None)),
-#         ("2/4", ([2], 4)),
-#         ("2,3/5", ([2, 3], 5)),
-#     ]
-#     for input_str, (partition_ids, partition_total) in variants:
-#         job = TriggererJob(partition=input_str)
-#         assert job.partition_ids == partition_ids
-#         assert job.partition_total == partition_total
-#     # Negative cases
-#     variants = ["0/1", "1", "3/2", "1,2,3/2", "one", "/1"]
-#     for input_str in variants:
-#         with pytest.raises(ValueError):
-#             TriggererJob(partition=input_str)
+@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
+def test_capacity_decode():
+    """
+    Tests that TriggererJob correctly sets capacity to a valid value passed in as a CLI arg,
+    handles invalid args, or sets it to a default value if no arg is passed.
+    """
+    # Positive cases
+    variants = [
+        42,
+        None,
+    ]
+    for input_str in variants:
+
+        job = TriggererJob(capacity=input_str)
+        assert job.capacity == input_str or 1000
+
+    # Negative cases
+    variants = [
+        "NAN",
+        0.5,
+        -42,
+        4 / 2,  # Resolves to a float, in addition to being just plain weird
+    ]
+    for input_str in variants:
+        with pytest.raises(ValueError):
+            TriggererJob(capacity=input_str)
 
 
 @pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
@@ -142,13 +148,13 @@ def test_trigger_lifecycle(session):
 def test_trigger_from_dead_triggerer(session):
     """
     Checks that the triggerer will correctly claim a Trigger that is assigned to a
-    triggerer that doesnot exist.
+    triggerer that does not exist.
     """
     # Use a trigger that has an invalid triggerer_id
     trigger = TimeDeltaTrigger(datetime.timedelta(days=7))
     trigger_orm = Trigger.from_object(trigger)
     trigger_orm.id = 1
-    trigger_orm.triggerer_id = 999  # non-existant triggerer
+    trigger_orm.triggerer_id = 999  # Non-existent triggerer
     session.add(trigger_orm)
     session.commit()
     # Make a TriggererJob and have it retrieve DB tasks
@@ -161,8 +167,8 @@ def test_trigger_from_dead_triggerer(session):
 @pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_from_expired_triggerer(session):
     """
-    Checks that the triggerer will correctly claim a Trigger that is assigned to a triggerer
-    that has an expired heartbeat.
+    Checks that the triggerer will correctly claim a Trigger that is assigned to a
+    triggerer that has an expired heartbeat.
     """
     # Use a trigger assigned to the expired triggerer
     trigger = TimeDeltaTrigger(datetime.timedelta(days=7))
@@ -170,7 +176,6 @@ def test_trigger_from_expired_triggerer(session):
     trigger_orm.id = 1
     trigger_orm.triggerer_id = 42
     session.add(trigger_orm)
-
     # Use a TriggererJob with an expired heartbeat
     triggerer_job_orm = TriggererJob()
     triggerer_job_orm.id = 42
