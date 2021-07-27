@@ -157,7 +157,6 @@ def remap_permissions():
         resources = appbuilder.sm.get_all_resources()
         if not any(appbuilder.sm.get_permission(old_action_name, resource.name) for resource in resources):
             appbuilder.sm.delete_action(old_action_name)
-        appbuilder.sm.sync_roles()
 
 
 def upgrade():
