@@ -141,6 +141,7 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):
         (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_PASSWORD),
         (permissions.ACTION_CAN_READ, permissions.RESOURCE_ROLE),
         (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_ROLE),
+        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_USER),
     ]
 
     # global resource for dag-level access
@@ -488,7 +489,7 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):
 
     def _has_access(self, user: User, action_name: str, resource_name: str) -> bool:
         """
-        Wraps the FAB built-in view access method. Won't work for AllDag access.
+        Wraps the FAB built-in view access method. Won't work for AllDag accOess.
 
         :param user: user object
         :type user: User

@@ -138,7 +138,7 @@ mapping = {
 
 def remap_permissions():
     """Apply Map Airflow permissions."""
-    appbuilder = create_app(config={'FAB_UPDATE_PERMS': False}).appbuilder
+    appbuilder = create_app(config={'FAB_UPDATE_PERMS': True}).appbuilder
     for old, new in mapping.items():
         (old_resource_name, old_action_name) = old
         old_permission = appbuilder.sm.get_permission(old_action_name, old_resource_name)
@@ -157,6 +157,7 @@ def remap_permissions():
         resources = appbuilder.sm.get_all_resources()
         if not any(appbuilder.sm.get_permission(old_action_name, resource.name) for resource in resources):
             appbuilder.sm.delete_action(old_action_name)
+        appbuilder.sm.sync_roles()
 
 
 def upgrade():

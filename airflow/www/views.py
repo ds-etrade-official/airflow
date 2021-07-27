@@ -4287,7 +4287,7 @@ class CustomUserDBModelView(UserDBModelView):
                 return self.class_permission_name_mapping.get(action_name, self._class_permission_name)
             if method_name:
                 return self.class_permission_name_mapping.get(method_name, self._class_permission_name)
-
+        # breakpoint()
         return self._class_permission_name
 
     @class_permission_name.setter
@@ -4326,6 +4326,7 @@ class CustomUserLDAPModelView(UserLDAPModelView):
     method_permission_name = {
         'userinfo': 'read',
         'list': 'read',
+        'userinfoedit': 'edit',
     }
     base_permissions = [
         permissions.ACTION_CAN_READ,
@@ -4339,6 +4340,7 @@ class CustomUserOAuthModelView(UserOAuthModelView):
     method_permission_name = {
         'userinfo': 'read',
         'list': 'read',
+        'userinfoedit': 'edit',
     }
     base_permissions = [
         permissions.ACTION_CAN_READ,
@@ -4352,6 +4354,7 @@ class CustomUserOIDModelView(UserOIDModelView):
     method_permission_name = {
         'userinfo': 'read',
         'list': 'read',
+        'userinfoedit': 'edit',
     }
     base_permissions = [
         permissions.ACTION_CAN_READ,
@@ -4365,6 +4368,7 @@ class CustomUserRemoteUserModelView(UserRemoteUserModelView):
     method_permission_name = {
         'userinfo': 'read',
         'list': 'read',
+        'userinfoedit': 'edit',
     }
     base_permissions = [
         permissions.ACTION_CAN_READ,
