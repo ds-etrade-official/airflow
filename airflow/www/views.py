@@ -4322,7 +4322,8 @@ class CustomUserStatsChartView(UserStatsChartView):
 class CustomUserLDAPModelView(UserLDAPModelView):
     """Customize permission names for FAB's builtin UserLDAPModelView."""
 
-    class_permission_name = permissions.RESOURCE_MY_PROFILE
+    # class_permission_name = permissions.RESOURCE_MY_PROFILE
+    class_permission_name = permissions.RESOURCE_USER
     method_permission_name = {
         'userinfo': 'read',
         'list': 'read',
@@ -4330,6 +4331,7 @@ class CustomUserLDAPModelView(UserLDAPModelView):
     }
     base_permissions = [
         permissions.ACTION_CAN_READ,
+        permissions.ACTION_CAN_EDIT,
     ]
 
 

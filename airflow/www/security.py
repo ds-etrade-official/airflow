@@ -66,83 +66,18 @@ class AirflowSecurityManager(SecurityManager, LoggingMixin):
     ###########################################################################
 
     # [START security_viewer_perms]
-    VIEWER_PERMISSIONS = [
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_AUDIT_LOG),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_DAG),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_DAG_DEPENDENCIES),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_DAG_CODE),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_DAG_RUN),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_IMPORT_ERROR),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_JOB),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_MY_PASSWORD),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_MY_PASSWORD),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_MY_PROFILE),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_MY_PROFILE),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_PLUGIN),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_SLA_MISS),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_TASK_INSTANCE),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_TASK_LOG),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_XCOM),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_WEBSITE),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_BROWSE_MENU),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_DAG_RUN),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_DOCS),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_DOCS_MENU),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_JOB),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_AUDIT_LOG),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_PLUGIN),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_SLA_MISS),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_TASK_INSTANCE),
-    ]
+    VIEWER_PERMISSIONS = []
     # [END security_viewer_perms]
 
     # [START security_user_perms]
-    USER_PERMISSIONS = [
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_DAG),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_DAG),
-        (permissions.ACTION_CAN_CREATE, permissions.RESOURCE_TASK_INSTANCE),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_TASK_INSTANCE),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_TASK_INSTANCE),
-        (permissions.ACTION_CAN_CREATE, permissions.RESOURCE_DAG_RUN),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_DAG_RUN),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_DAG_RUN),
-    ]
+    USER_PERMISSIONS = []
     # [END security_user_perms]
 
     # [START security_op_perms]
-    OP_PERMISSIONS = [
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_CONFIG),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_ADMIN_MENU),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_CONNECTION),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_POOL),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_VARIABLE),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_XCOM),
-        (permissions.ACTION_CAN_CREATE, permissions.RESOURCE_CONNECTION),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_CONNECTION),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_CONNECTION),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_CONNECTION),
-        (permissions.ACTION_CAN_CREATE, permissions.RESOURCE_POOL),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_POOL),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_POOL),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_POOL),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_PROVIDER),
-        (permissions.ACTION_CAN_CREATE, permissions.RESOURCE_VARIABLE),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_VARIABLE),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_VARIABLE),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_VARIABLE),
-        (permissions.ACTION_CAN_DELETE, permissions.RESOURCE_XCOM),
-    ]
+    OP_PERMISSIONS = []
     # [END security_op_perms]
 
-    ADMIN_PERMISSIONS = [
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_TASK_RESCHEDULE),
-        (permissions.ACTION_CAN_ACCESS_MENU, permissions.RESOURCE_TASK_RESCHEDULE),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_PASSWORD),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_PASSWORD),
-        (permissions.ACTION_CAN_READ, permissions.RESOURCE_ROLE),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_ROLE),
-        (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_USER),
-    ]
+    ADMIN_PERMISSIONS = []
 
     # global resource for dag-level access
     DAG_RESOURCES = {permissions.RESOURCE_DAG}
