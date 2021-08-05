@@ -217,6 +217,50 @@ class S3Hook(AwsBaseHook):
         return prefix in plist
 
     @provide_bucket_name
+    def list_prefixes(
+        self,
+        bucket_name: Optional[str] = None,
+        prefix: Optional[str] = None,
+        delimiter: Optional[str] = None,
+        page_size: Optional[int] = None,
+        max_items: Optional[int] = None,
+    ) -> list:
+        """
+        Lists prefixes in a bucket under prefix
+        :param bucket_name: the name of the bucket
+        :type bucket_name: str
+        :param prefix: a key prefix
+        :type prefix: str
+        :param delimiter: the delimiter marks key hierarchy.
+        :type delimiter: str
+        :param page_size: pagination size
+        :type page_size: int
+        :param max_items: maximum items to return
+        :type max_items: int
+        :return: a list of matched prefixes
+        :rtype: list
+        """
+        prefix = prefix or ''
+        delimiter = delimiter or ''
+        config = {
+            'PageSize': page_size,
+            'MaxItems': max_items,
+        }
+
+        paginator = self.get_conn().get_paginator('list_objects_v2')
+        response = paginator.paginate(
+            Bucket=bucket_name, Prefix=prefix, Delimiter=delimiter, PaginationConfig=config
+        )
+
+        prefixes = []
+        for page in response:
+            if 'CommonPrefixes' in page:
+                for common_prefix in page['CommonPrefixes']:
+                    prefixes.append(common_prefix['Prefix'])
+
+        return prefixes
+
+    @provide_bucket_name
     def list_keys(
         self,
         bucket_name: Optional[str] = None,
@@ -259,6 +303,9 @@ class S3Hook(AwsBaseHook):
             if 'Contents' in page:
                 for k in page['Contents']:
                     keys.append(k['Key'])
+            # Capturing common prefixes here to avoid making an additonal API call in the
+            # operator with the list_prefixes hook. This assumes the same optional args
+            # for both calls (which is also the case when making two calls).
             if 'CommonPrefixes' in page:
                 for common_prefix in page['CommonPrefixes']:
                     prefixes.append(common_prefix['Prefix'])
@@ -414,7 +461,7 @@ class S3Hook(AwsBaseHook):
         :rtype: boto3.s3.Object
         """
         prefix = re.split(r'[*]', wildcard_key, 1)[0]
-        key_list = self.list_keys(bucket_name, prefix=prefix, delimiter=delimiter)
+        key_list, _ = self.list_keys(bucket_name, prefix=prefix, delimiter=delimiter)
         key_matches = [k for k in key_list if fnmatch.fnmatch(k, wildcard_key)]
         if key_matches:
             return self.get_key(key_matches[0], bucket_name)
@@ -711,7 +758,7 @@ class S3Hook(AwsBaseHook):
         :rtype: None
         """
         if force_delete:
-            bucket_keys = self.list_keys(bucket_name=bucket_name)
+            bucket_keys, _ = self.list_keys(bucket_name=bucket_name)
             if bucket_keys:
                 self.delete_objects(bucket=bucket_name, keys=bucket_keys)
         self.conn.delete_bucket(Bucket=bucket_name)
