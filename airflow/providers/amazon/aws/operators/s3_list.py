@@ -36,8 +36,9 @@ class S3ListOperator(BaseOperator):
     :type prefix: str
     :param delimiter: The delimiter marks key hierarchy. (templated)
     :type delimiter: str
-    :param recursive: Recursively lists objects in a bucket including subfolders
-    if set to True, defaults to False
+    :param recursive: Recursively lists objects in a bucket, if set to True this
+    will include subfolders in addition to files. If set to False it will only
+    return files. Defaults to False.
     :type recursive: bool
     :param aws_conn_id: The connection ID to use when connecting to S3 storage.
     :type aws_conn_id: str
@@ -103,11 +104,8 @@ class S3ListOperator(BaseOperator):
             self.recursive,
         )
 
-        keys = hook.list_keys(bucket_name=self.bucket, prefix=self.prefix, delimiter=self.delimiter)
+        keys, prefixes = hook.list_keys(bucket_name=self.bucket, prefix=self.prefix, delimiter=self.delimiter)
         if self.recursive:
-            prefixes = hook.list_prefixes(
-                bucket_name=self.bucket, prefix=self.prefix, delimiter=self.delimiter
-            )
             for prefix in prefixes:
                 keys.append(prefix)
 

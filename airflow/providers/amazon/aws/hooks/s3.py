@@ -217,51 +217,6 @@ class S3Hook(AwsBaseHook):
         return prefix in plist
 
     @provide_bucket_name
-    def list_prefixes(
-        self,
-        bucket_name: Optional[str] = None,
-        prefix: Optional[str] = None,
-        delimiter: Optional[str] = None,
-        page_size: Optional[int] = None,
-        max_items: Optional[int] = None,
-    ) -> list:
-        """
-        Lists prefixes in a bucket under prefix
-
-        :param bucket_name: the name of the bucket
-        :type bucket_name: str
-        :param prefix: a key prefix
-        :type prefix: str
-        :param delimiter: the delimiter marks key hierarchy.
-        :type delimiter: str
-        :param page_size: pagination size
-        :type page_size: int
-        :param max_items: maximum items to return
-        :type max_items: int
-        :return: a list of matched prefixes
-        :rtype: list
-        """
-        prefix = prefix or ''
-        delimiter = delimiter or ''
-        config = {
-            'PageSize': page_size,
-            'MaxItems': max_items,
-        }
-
-        paginator = self.get_conn().get_paginator('list_objects_v2')
-        response = paginator.paginate(
-            Bucket=bucket_name, Prefix=prefix, Delimiter=delimiter, PaginationConfig=config
-        )
-
-        prefixes = []
-        for page in response:
-            if 'CommonPrefixes' in page:
-                for common_prefix in page['CommonPrefixes']:
-                    prefixes.append(common_prefix['Prefix'])
-
-        return prefixes
-
-    @provide_bucket_name
     def list_keys(
         self,
         bucket_name: Optional[str] = None,
@@ -269,7 +224,7 @@ class S3Hook(AwsBaseHook):
         delimiter: Optional[str] = None,
         page_size: Optional[int] = None,
         max_items: Optional[int] = None,
-    ) -> list:
+    ) -> Tuple[list, list]:
         """
         Lists keys in a bucket under prefix and not containing delimiter
 
@@ -284,7 +239,7 @@ class S3Hook(AwsBaseHook):
         :param max_items: maximum items to return
         :type max_items: int
         :return: a list of matched keys
-        :rtype: list
+        :rtype: tuple
         """
         prefix = prefix or ''
         delimiter = delimiter or ''
@@ -299,12 +254,16 @@ class S3Hook(AwsBaseHook):
         )
 
         keys = []
+        prefixes = []
         for page in response:
             if 'Contents' in page:
                 for k in page['Contents']:
                     keys.append(k['Key'])
+            if 'CommonPrefixes' in page:
+                for common_prefix in page['CommonPrefixes']:
+                    prefixes.append(common_prefix['Prefix'])
 
-        return keys
+        return keys, prefixes
 
     @provide_bucket_name
     @unify_bucket_name_and_key
