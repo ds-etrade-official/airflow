@@ -24,9 +24,9 @@ from airflow.providers.amazon.aws.operators.s3_list import S3ListOperator
 TASK_ID = 'test-s3-list-operator'
 BUCKET = 'test-bucket'
 DELIMITER = '.csv'
-PREFIX = 'TEST'
+PREFIX = 'TEST/'
 MOCK_FILES = ["TEST1.csv", "TEST2.csv", "TEST3.csv"]
-MOCK_FILES_RECURSIVE = ["TEST1.csv", "TEST2.csv", "TEST3.csv", "TEST"]
+MOCK_FILES_RECURSIVE = ["TEST1.csv", "TEST2.csv", "TEST3.csv", "TEST/"]
 
 
 class TestS3ListOperator(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestS3ListOperator(unittest.TestCase):
             bucket=BUCKET,
             prefix=PREFIX,
             delimiter=DELIMITER,
-            # recursive omitted to test that it defaults to False
+            # recursive omitted to verify that it defaults to False
         )
 
         files = operator.execute(None)
