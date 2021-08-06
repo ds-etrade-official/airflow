@@ -333,6 +333,19 @@ class TestVariableModelView(TestBase):
         )
         self.check_content_in_response('4 variable(s) successfully updated.', resp)
 
+    def test_import_variables_anon(self):
+        assert self.session.query(models.Variable).count() == 0
+
+        content = '{"str_key": "str_value}'
+        bytes_content = io.BytesIO(bytes(content, encoding='utf-8'))
+
+        self.logout()
+        resp = self.client.post(
+            '/variable/varimport', data={'file': (bytes_content, 'test.json')}, follow_redirects=True
+        )
+        self.check_content_not_in_response('variable(s) successfully updated.', resp)
+        self.check_content_in_response('Sign In', resp)
+
 
 class PluginOperator(BaseOperator):
     pass
