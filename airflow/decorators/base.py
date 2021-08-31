@@ -130,6 +130,9 @@ class DecoratedOperator(BaseOperator):
         self.op_kwargs = op_kwargs
         super().__init__(**kwargs_to_upstream, **kwargs)
 
+    def run_callable(self):
+        return self.python_callable(*self.op_args, **self.op_kwargs)
+
     def execute(self, context: Dict):
         return_value = super().execute(context)
         self._handle_output(return_value=return_value, context=context, xcom_push=self.xcom_push)

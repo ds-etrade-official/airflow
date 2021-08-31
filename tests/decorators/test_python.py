@@ -137,6 +137,28 @@ class TestAirflowTaskDecorator(TestPythonBase):
 
         assert identity_notyping(5).operator.multiple_outputs is False
 
+    def test_runs_function_without_dag(self):
+        @task_decorator()
+        def add_one(num):
+            return num + 1
+
+        assert add_one(1).run() == 2
+
+        with self.dag:
+            res = add_one(4)
+
+        dr = self.dag.create_dagrun(
+            run_id=DagRunType.MANUAL.value,
+            start_date=timezone.utcnow(),
+            execution_date=DEFAULT_DATE,
+            state=State.RUNNING,
+        )
+
+        res.operator.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE)
+
+        ti = dr.get_task_instances()[0]
+        assert ti.xcom_pull() == 5
+
     def test_manual_multiple_outputs_false_with_typings(self):
         @task_decorator(multiple_outputs=False)
         def identity2(x: int, y: int) -> Dict[int, int]:

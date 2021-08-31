@@ -128,6 +128,11 @@ class XComArg(TaskMixin):
         """Proxy to underlying operator set_downstream method. Required by TaskMixin."""
         self.operator.set_downstream(task_or_task_list, edge_modifier)
 
+    def run(self):
+        if not getattr(self.operator, "run_callable", None):
+            raise AirflowException(f"Operator {self.operator.__class__} does not have a callable you can run")
+        return self.operator.run_callable()
+
     def resolve(self, context: Dict) -> Any:
         """
         Pull XCom value for the existing arg. This method is run during ``op.execute()``
