@@ -142,7 +142,7 @@ class TestAirflowTaskDecorator(TestPythonBase):
         def add_one(num):
             return num + 1
 
-        assert add_one(1).run() == 2
+        assert add_one(1).test() == 2
 
         with self.dag:
             res = add_one(4)

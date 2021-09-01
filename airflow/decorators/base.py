@@ -130,7 +130,7 @@ class DecoratedOperator(BaseOperator):
         self.op_kwargs = op_kwargs
         super().__init__(**kwargs_to_upstream, **kwargs)
 
-    def run_callable(self):
+    def test_callable(self):
         return self.python_callable(*self.op_args, **self.op_kwargs)
 
     def execute(self, context: Dict):
