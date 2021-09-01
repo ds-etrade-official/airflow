@@ -129,7 +129,7 @@ class XComArg(TaskMixin):
         self.operator.set_downstream(task_or_task_list, edge_modifier)
 
     def test(self):
-        if not getattr(self.operator, "run_callable", None):
+        if not getattr(self.operator, "test_callable", None):
             raise AirflowException(f"Operator {self.operator.__class__} does not have a callable you can run")
         return self.operator.test_callable()
 
