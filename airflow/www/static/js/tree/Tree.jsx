@@ -92,9 +92,9 @@ const Tree = () => {
           justifyContent="space-between"
           alignItems="center"
           width="100%"
-          borderBottomWidth={2}
-          borderBottomColor={level ? 'white' : 'gray.200'}
-          backgroundColor={isHover && 'rgba(113, 128, 150, 0.2)'}
+          borderBottomWidth={1}
+          borderBottomColor="gray.200"
+          backgroundColor={isHover && 'rgba(113, 128, 150, 0.1)'}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
@@ -137,7 +137,7 @@ const Tree = () => {
         <Switch id="auto-refresh" onChange={onToggleRefresh} isChecked={refreshOn} size="lg" />
       </FormControl>
       <Box py={10} position="relative" mr={50} pl={10} borderRightWidth={1}>
-        <Text transform="rotate(-90deg)" position="absolute" left="-20px" top="45px">Dag Runs</Text>
+        <Text transform="rotate(-90deg)" position="absolute" left="-6px" top="45px">Runs</Text>
         <Text transform="rotate(-90deg)" position="absolute" left="-6px" top="135px">Tasks</Text>
         {!!runs.length && (
         <>
@@ -159,7 +159,7 @@ const Tree = () => {
           </DurationTick>
         </>
         )}
-        <Flex justifyContent="space-between" borderBottomWidth={2} minHeight="100px">
+        <Flex justifyContent="space-between" borderBottomWidth={4} minHeight="100px">
           <Box minWidth="200px" />
           <Flex justifyContent="flex-end" overflowX="scroll" pt="100px" mt="-100px">
             {runs.reverse().map((run, i) => (
