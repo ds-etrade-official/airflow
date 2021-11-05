@@ -1,0 +1,62 @@
+---
+name: Keep in sync with astronomer/main
+on:  # yamllint disable-line rule:truthy
+  # push:
+  #   branches: [ main ]
+  schedule:
+    # TODO: Remove once this is working
+    #        day of week  *: Each day of the week
+    #                  |
+    #            month |  *: Each month
+    #                | |
+    #   day of month | |  *: Each day of the month
+    #              | | |
+    #        hours | | |  *: Each hour
+    #            | | | |
+    #    minutes | | | |  */5: Every 5 minutes
+    #          | | | | |
+    #          v v v v v
+    - cron: "*/5 * * * *"  # Run every 5 minutes every day
+    # #      day of week  *: Each day of the week
+    # #                |
+    # #          month |  *: Each month
+    # #              | |
+    # # day of month | |  *: Each day of the month
+    # #            | | |
+    # #      hours | | |  0: 12am (UTC)
+    # #          | | | |
+    # #  minutes | | | |  0: :00
+    # #        | | | | |
+    # #        v v v v v
+    # - cron: "0 0 * * *"  # Run every night at midnight UTC
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-20.04
+    env:
+      PAT: ${{ secrets.GH_PAT }}
+    strategy:
+      matrix:
+        branch:
+          - tracking-qa
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: tracking-qa
+      - name: Rebase ${{ matrix.branch }}
+        env:
+          UPSTREAM_REPO: astronomer/airflow
+          SOURCE_BRANCH: origin/main  # Always pull/rebase on to main
+          DESTINATION_BRANCH: ${{ matrix.branch }}
+        run: |
+          set -eux -o pipefail
+
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PAT}@github.com/${GITHUB_REPOSITORY}"
+
+          git fetch --all
+          git rebase "${SOURCE_BRANCH}"
+          # git push --force origin "${DESTINATION_BRANCH}"
+          # git remote -v
