@@ -37,13 +37,13 @@ jobs:
     strategy:
       matrix:
         branch:
-          - tracking-qa
+          - astro-main
     steps:
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: tracking-qa
+          ref: astro-main
       - name: Rebase ${{ matrix.branch }}
         env:
           UPSTREAM_REPO: astronomer/airflow
@@ -58,8 +58,8 @@ jobs:
 
           git fetch --all
           git rebase "${SOURCE_BRANCH}"
-          # git push --force origin "${DESTINATION_BRANCH}"
-          # git remote -v
+          git push --force origin "${DESTINATION_BRANCH}"
+          git remote -v
 
   build-python-packages:
     timeout-minutes: 10
@@ -80,28 +80,29 @@ jobs:
           pip install packaging GitPython wheel
       - name: Create Python Wheel
         run: ./scripts/ci/astronomer-qa-weekly-build.sh
-      - name: "Deploy Python Wheel and tar.gz"
-        uses: actions-hub/gcloud@330.0.0
-        env:
-          APPLICATION_CREDENTIALS: ${{secrets.ASTRONOMER_PROD}}
-          PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
-        with:
-          args: cp -a public-read -r ./dist/* gs://pip.astronomer.io/simple
-          cli: gsutil
-      - name: "Deploy '.build' file (containing deployed version number)"
-        uses: actions-hub/gcloud@330.0.0
-        env:
-          APPLICATION_CREDENTIALS: ${{secrets.ASTRONOMER_PROD}}
-          PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
-        with:
-          args: >
-            -h "Cache-Control:no-cache,max-age=0"
-            cp -a public-read -r "./**/*.build" gs://pip.astronomer.io/simple/astronomer-certified
-          cli: gsutil
-      - name: Index Pages
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS_CONTENT: ${{secrets.ASTRONOMER_PROD}}
-        run: |
-          git clone https://github.com/astronomer/pip-release-utilities.git pip-release-utilities
-          ./pip-release-utilities/build-index-page.sh pip.astronomer.io simple/apache-airflow
-          ./pip-release-utilities/build-index-page.sh pip.astronomer.io simple/astronomer-certified
+
+        # - name: "Deploy Python Wheel and tar.gz"
+        #   uses: actions-hub/gcloud@330.0.0
+        #   env:
+        #     APPLICATION_CREDENTIALS: ${{secrets.ASTRONOMER_PROD}}
+        #     PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
+        #   with:
+        #     args: cp -a public-read -r ./dist/* gs://pip.astronomer.io/simple
+        #     cli: gsutil
+        # - name: "Deploy '.build' file (containing deployed version number)"
+        #   uses: actions-hub/gcloud@330.0.0
+        #   env:
+        #     APPLICATION_CREDENTIALS: ${{secrets.ASTRONOMER_PROD}}
+        #     PROJECT_ID: ${{secrets.GCLOUD_PROJECT_ID}}
+        #   with:
+        #     args: >
+        #       -h "Cache-Control:no-cache,max-age=0"
+        #       cp -a public-read -r "./**/*.build" gs://pip.astronomer.io/simple/astronomer-certified
+        #     cli: gsutil
+        # - name: Index Pages
+        #   env:
+        #     GOOGLE_APPLICATION_CREDENTIALS_CONTENT: ${{secrets.ASTRONOMER_PROD}}
+        #   run: |
+        #     git clone https://github.com/astronomer/pip-release-utilities.git pip-release-utilities
+        #     ./pip-release-utilities/build-index-page.sh pip.astronomer.io simple/apache-airflow
+        #     ./pip-release-utilities/build-index-page.sh pip.astronomer.io simple/astronomer-certified
