@@ -158,6 +158,14 @@ class DagRun(Base, LoggingMixin):
         else:
             self.data_interval_start, self.data_interval_end = data_interval
 
+        if run_id and "/" in run_id:
+            message = (
+                f"Using forward slashes in a DAG run ID ({run_id}) is "
+                f"deprecated and causes difficulties when accessing the run "
+                f"from Airflow's Stable REST API."
+            )
+            warnings.warn(message, DeprecationWarning)
+
         self.dag_id = dag_id
         self.run_id = run_id
         self.execution_date = execution_date
