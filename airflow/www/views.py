@@ -744,28 +744,15 @@ class Airflow(AirflowBaseView):
                 .all()
             )
             user_permissions = g.user.perms
-            all_dags_editable = (permissions.ACTION_CAN_EDIT, permissions.RESOURCE_DAG) in user_permissions
             can_create_dag_run = (
                 permissions.ACTION_CAN_CREATE,
                 permissions.RESOURCE_DAG_RUN,
             ) in user_permissions
 
-            all_dags_deletable = (
-                permissions.ACTION_CAN_DELETE,
-                permissions.RESOURCE_DAG,
-            ) in user_permissions
-
             for dag in dags:
-                dag_resource_name = permissions.RESOURCE_DAG_PREFIX + dag.dag_id
-                if all_dags_editable:
-                    dag.can_edit = True
-                else:
-                    dag.can_edit = (permissions.ACTION_CAN_EDIT, dag_resource_name) in user_permissions
+                dag.can_edit = current_app.appbuilder.sm.can_edit_dag(dag.dag_id, g.user)
                 dag.can_trigger = dag.can_edit and can_create_dag_run
-                if all_dags_deletable:
-                    dag.can_delete = True
-                else:
-                    dag.can_delete = (permissions.ACTION_CAN_DELETE, dag_resource_name) in user_permissions
+                dag.can_delete = current_app.appbuilder.sm.can_delete_dag(dag.dag_id, g.user)
 
             dagtags = session.query(DagTag.name).distinct(DagTag.name).all()
             tags = [
