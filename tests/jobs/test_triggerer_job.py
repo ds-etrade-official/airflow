@@ -17,7 +17,6 @@
 # under the License.
 
 import datetime
-import sys
 import time
 
 import pytest
@@ -49,7 +48,6 @@ def session():
         yield session
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_is_alive():
     """Checks the heartbeat logic"""
     # Current time
@@ -70,7 +68,6 @@ def test_is_alive():
     assert not triggerer_job.is_alive(), "Completed jobs even with recent heartbeat should not be alive"
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_is_needed(session):
     """Checks the triggerer-is-needed logic"""
     # No triggers, no need
@@ -85,7 +82,6 @@ def test_is_needed(session):
     assert triggerer_job.is_needed() is True
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_capacity_decode():
     """
     Tests that TriggererJob correctly sets capacity to a valid value passed in as a CLI arg,
@@ -112,7 +108,6 @@ def test_capacity_decode():
             TriggererJob(capacity=input_str)
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_lifecycle(session):
     """
     Checks that the triggerer will correctly see a new Trigger in the database
@@ -159,7 +154,6 @@ def test_trigger_lifecycle(session):
         job.runner.stop = True
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_from_dead_triggerer(session):
     """
     Checks that the triggerer will correctly claim a Trigger that is assigned to a
@@ -179,7 +173,6 @@ def test_trigger_from_dead_triggerer(session):
     assert [x for x, y in job.runner.to_create] == [1]
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_from_expired_triggerer(session):
     """
     Checks that the triggerer will correctly claim a Trigger that is assigned to a
@@ -206,7 +199,6 @@ def test_trigger_from_expired_triggerer(session):
     assert [x for x, y in job.runner.to_create] == [1]
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_firing(session):
     """
     Checks that when a trigger fires, it correctly makes it into the
@@ -238,7 +230,6 @@ def test_trigger_firing(session):
         job.runner.stop = True
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_failing(session):
     """
     Checks that when a trigger fails, it correctly makes it into the
@@ -270,7 +261,6 @@ def test_trigger_failing(session):
         job.runner.stop = True
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_trigger_cleanup(session):
     """
     Checks that the triggerer will correctly clean up triggers that do not
@@ -290,7 +280,6 @@ def test_trigger_cleanup(session):
     assert session.query(Trigger).count() == 0
 
 
-@pytest.mark.skipif(sys.version_info.minor <= 6 and sys.version_info.major <= 3, reason="No triggerer on 3.6")
 def test_invalid_trigger(session, dag_maker):
     """
     Checks that the triggerer will correctly fail task instances that depend on
