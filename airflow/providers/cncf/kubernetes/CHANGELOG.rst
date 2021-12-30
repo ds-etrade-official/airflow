@@ -152,6 +152,12 @@ Bug Fixes
      * ``Even more typing in operators (template_fields/ext) (#20608)``
      * ``Update documentation for provider December 2021 release (#20523)``
 
+Features
+~~~~~~~~
+
+* Can now derive kubernetes creds using airflow connection, through KubernetesHook
+
+
 2.2.0
 .....
 
