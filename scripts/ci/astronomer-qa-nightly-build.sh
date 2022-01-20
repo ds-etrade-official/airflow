@@ -83,6 +83,26 @@ echo "Airflow Base Version: $AIRFLOW_BASE_VERSION"
 mkdir astronomer-certified
 echo "${CURRENT_AC_VERSION}" > astronomer-certified/latest-main.build
 
+# Debug :/
+echo "jq version: $(jq --version)"
+echo "DATE_STRING: $DATE_STRING"
+echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME:?You must specify GITHUB_REF_NAME}"
+echo "GITHUB_REF_TYPE: ${GITHUB_REF_TYPE:?You must specify GITHUB_REF_TYPE}"
+echo "GITHUB_SHA: ${GITHUB_SHA:?You must specify GITHUB_SHA}"
+echo "GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-main}"
+echo "HEAD_REF_COMMIT_SHA: ${HEAD_REF_COMMIT_SHA}"
+echo "GITHUB_WORKFLOW: ${GITHUB_WORKFLOW:?You must specify GITHUB_WORKFLOW}"
+echo "GITHUB_JOB: ${GITHUB_JOB:?You must specify GITHUB_JOB}"
+echo "GITHUB_ACTION: ${GITHUB_ACTION:?You must specify GITHUB_ACTION}"
+echo "GITHUB_RUN_NUMBER: ${GITHUB_RUN_NUMBER:?You must specify GITHUB_RUN_NUMBER}"
+echo "RUNNER_NAME: ${RUNNER_NAME:?You must specify RUNNER_NAME}"
+echo "RUNNER_OS: ${RUNNER_OS:?You must specify RUNNER_OS}"
+echo "python3: $(python3 --version)"
+echo "AIRFLOW_PACKAGE_NAME: ${AIRFLOW_PACKAGE_NAME}"
+echo "UPDATED_AIRFLOW_VERSION: ${UPDATED_AIRFLOW_VERSION}"
+echo "AC_PACKAGE_NAME: ${AC_PACKAGE_NAME}"
+echo "CURRENT_AC_VERSION: ${CURRENT_AC_VERSION}"
+
 # From https://stackoverflow.com/a/39896036
 # Use jq since it knows how to properly quote variables into JSON
 #
