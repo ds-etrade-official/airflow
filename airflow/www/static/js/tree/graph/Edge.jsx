@@ -17,35 +17,30 @@
  * under the License.
  */
 
-/* global document */
-
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { ChakraProvider } from '@chakra-ui/react';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import Main from './Main';
+import { LinePath } from '@visx/shape';
+// import { curveBundle } from '@visx/curve';
+import {
+  useTheme,
+} from '@chakra-ui/react';
 
-// create shadowRoot
-const root = document.querySelector('#root');
-const shadowRoot = root.attachShadow({ mode: 'open' });
-const myCache = createCache({
-  container: shadowRoot,
-  key: 'c',
-});
-const mainElement = document.getElementById('react-container');
-shadowRoot.appendChild(mainElement);
-
-function App() {
+const Edge = ({ edge }) => {
+  const { colors } = useTheme();
   return (
-    <React.StrictMode>
-      <CacheProvider value={myCache}>
-        <ChakraProvider>
-          <Main />
-        </ChakraProvider>
-      </CacheProvider>
-    </React.StrictMode>
+    <>
+      {edge.sections.map((s) => (
+        <LinePath
+          key={s.id}
+          stroke={colors.gray[400]}
+          // curve={curveBundle}
+          strokeWidth={1}
+          x={(d) => d.x || 0}
+          y={(d) => d.y || 0}
+          data={[s.startPoint, ...(s.bendPoints || []), s.endPoint]}
+        />
+      ))}
+    </>
   );
-}
+};
 
-ReactDOM.render(<App />, mainElement);
+export default Edge;

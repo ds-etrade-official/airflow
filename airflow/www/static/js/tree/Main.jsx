@@ -17,35 +17,17 @@
  * under the License.
  */
 
-/* global document */
-
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { ChakraProvider } from '@chakra-ui/react';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import Main from './Main';
+import { Flex } from '@chakra-ui/react';
 
-// create shadowRoot
-const root = document.querySelector('#root');
-const shadowRoot = root.attachShadow({ mode: 'open' });
-const myCache = createCache({
-  container: shadowRoot,
-  key: 'c',
-});
-const mainElement = document.getElementById('react-container');
-shadowRoot.appendChild(mainElement);
+import Tree from './Tree';
+import Graph from './Graph/index';
 
-function App() {
-  return (
-    <React.StrictMode>
-      <CacheProvider value={myCache}>
-        <ChakraProvider>
-          <Main />
-        </ChakraProvider>
-      </CacheProvider>
-    </React.StrictMode>
-  );
-}
+const Main = () => (
+  <Flex justifyContent="space-between">
+    <Tree />
+    <Graph />
+  </Flex>
+);
 
-ReactDOM.render(<App />, mainElement);
+export default Main;

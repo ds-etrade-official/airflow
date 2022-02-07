@@ -17,35 +17,26 @@
  * under the License.
  */
 
-/* global document */
-
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { ChakraProvider } from '@chakra-ui/react';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import Main from './Main';
+import { Box, Text } from '@chakra-ui/react';
+import { Group } from '@visx/group';
 
-// create shadowRoot
-const root = document.querySelector('#root');
-const shadowRoot = root.attachShadow({ mode: 'open' });
-const myCache = createCache({
-  container: shadowRoot,
-  key: 'c',
-});
-const mainElement = document.getElementById('react-container');
-shadowRoot.appendChild(mainElement);
+const Node = ({
+  node: {
+    id, height, width, x, y,
+  },
+  task,
+  children,
+}) => (
+  <Group top={y} left={x} height={height} width={width}>
+    <foreignObject width={width} height={height}>
+      <Box borderWidth={1} borderRadius={5} p={2} height="100%" width="100%" borderColor="gray.400">
+        <Text fontSize={12}>{id}</Text>
+        <Text fontSize={12}>{(!!task && task.taskType) || ''}</Text>
+      </Box>
+    </foreignObject>
+    {children}
+  </Group>
+);
 
-function App() {
-  return (
-    <React.StrictMode>
-      <CacheProvider value={myCache}>
-        <ChakraProvider>
-          <Main />
-        </ChakraProvider>
-      </CacheProvider>
-    </React.StrictMode>
-  );
-}
-
-ReactDOM.render(<App />, mainElement);
+export default Node;
