@@ -20,6 +20,7 @@ import pytest
 from airflow.www import app
 from tests.test_utils.config import conf_vars
 from tests.test_utils.decorators import dont_initialize_flask_app_submodules
+from tests.test_utils.www import client_with_login
 
 
 @pytest.fixture(scope="session")
@@ -48,3 +49,9 @@ def dagbag():
 
     DagBag(include_examples=True, read_dags_from_db=False).sync_to_db()
     return DagBag(include_examples=True, read_dags_from_db=True)
+
+
+@pytest.fixture()
+def admin_client(app):
+    app.config['WTF_CSRF_ENABLED'] = False
+    return client_with_login(app, username="test_admin", password="test_admin")
