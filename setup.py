@@ -649,6 +649,7 @@ devel_only = [
     'requests_mock',
     'rich_click',
     'semver',
+    'towncrier',
     'twine',
     'wheel',
     'yamllint',

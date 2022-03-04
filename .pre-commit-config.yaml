@@ -64,7 +64,7 @@ repos:
           \.properties$|\.cfg$|\.conf$|\.ini$|\.ldif$|\.readthedocs$|\.service$|\.tf$|Dockerfile.*$
       - id: insert-license
         name: Add license for all rst files
-        exclude: ^\.github/.*$|^airflow/_vendor/
+        exclude: ^\.github/.*$|^airflow/_vendor/|newsfragments/.*\.rst$
         args:
           - --comment-style
           - "||"
@@ -266,7 +266,7 @@ repos:
           The word(s) should be in lowercase." && exec codespell "$@"' --
         language: python
         types: [text]
-        exclude: ^airflow/_vendor/|^CHANGELOG\.txt|^airflow/www/static/css/material-icons\.css
+        exclude: ^airflow/_vendor/|^RELEASE_NOTES.rst|^airflow/www/static/css/material-icons\.css
         args:
           - --ignore-words=docs/spelling_wordlist.txt
           - --skip=docs/*/commits.rst,airflow/providers/*/*.rst,*.lock,INTHEWILD.md,*.min.js,docs/apache-airflow/pipeline_example.csv

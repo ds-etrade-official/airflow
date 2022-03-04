@@ -214,6 +214,7 @@ JobStatus
 JobTrigger
 Json
 Jupyter
+KEDA
 KYLIN
 Kalibrr
 Kamil
@@ -265,6 +266,7 @@ Namenode
 Namespace
 Neo4j
 NetBIOS
+NetworkPolicy
 Nextdoor
 Nodegroup
 Nodegroups
@@ -283,6 +285,7 @@ PEM
 POSIX
 PTarget
 PTransform
+PVC
 Pagerduty
 Papermill
 Parallelize
@@ -335,6 +338,7 @@ Reserialize
 ResourceRequirements
 Roadmap
 Robinhood
+RoleBinding
 SIGTERM
 SSHClient
 SSHTunnelForwarder
@@ -346,6 +350,7 @@ SecretManagerClient
 Seedlist
 Sendgrid
 SerializedDAG
+ServiceAccount
 SlackHook
 SlackResponse
 SnowflakeHook
@@ -1189,6 +1194,7 @@ pydruid
 pyexasol
 pyhive
 pyhs
+pylint
 pymongo
 pymssql
 pymysql
@@ -1430,6 +1436,7 @@ todo
 tokenization
 tokopedia
 tolerations
+toolchain
 tooltip
 tooltips
 traceback
