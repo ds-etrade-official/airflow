@@ -60,7 +60,7 @@ Bug Fixes
 
 - Fix elasticsearch URL when username/password are empty (#21222)
 - Mount ``airflow.cfg`` in wait-for-airflow-migrations containers (#20609)
-- Grant pod log reader to triggerer serviceaccount (#21111)
+- Grant pod log reader to triggerer ServiceAccount (#21111)
 
 Doc only changes
 ^^^^^^^^^^^^^^^^
@@ -124,7 +124,7 @@ New Features
 - Add support for ``securityContext`` (#18249)
 - Add extra containers, volumes and volume mounts for jobs (#18808)
 - Allow ingress multiple hostnames w/diff secrets (#18542)
-- PgBouncer extra volumes, volume mounts, and sslmode (#19749)
+- PgBouncer extra volumes, volume mounts, and ``sslmode`` (#19749)
 - Allow specifying kerberos keytab (#19054)
 - Allow disabling the Helm hooks (#18776, #20018)
 - Add ``migration-wait-timeout`` (#20069)
@@ -132,7 +132,7 @@ New Features
 Improvements
 ^^^^^^^^^^^^
 
-- Increase default livenessProbe timeout (#20698)
+- Increase default ``livenessProbe`` timeout (#20698)
 - Strict schema for k8s objects for values.yaml (#19181)
 - Remove unnecessary ``pod_template_file`` defaults (#19690)
 - Use built-in ``check-migrations`` command for Airflow>=2 (#19676)
@@ -142,7 +142,7 @@ Bug Fixes
 
 - Fix precedence of ``affinity``, ``nodeSelector``, and ``tolerations`` (#20641)
 - Fix chart elasticsearch default port 80 to 9200. (#20616)
-- Fix network policy issue for webserver and flowerui (#20199)
+- Fix network policy issue for webserver and flower ui (#20199)
 - Use local definitions for k8s schema validation (#20544)
 - Add custom labels for ingresses/PVCs (#20535)
 - Fix extra secrets/configmaps labels (#20464)

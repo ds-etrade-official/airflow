@@ -286,6 +286,7 @@ POSIX
 PTarget
 PTransform
 PVC
+PVCs
 Pagerduty
 Papermill
 Parallelize
