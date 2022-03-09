@@ -3622,6 +3622,7 @@ class XComModelView(AirflowModelView):
             task_id=item.task_id,
             dag_id=item.dag_id,
             run_id=item.run_id,
+            map_index=item.map_index,
         )
 
     def pre_update(self, item):
@@ -3633,6 +3634,7 @@ class XComModelView(AirflowModelView):
             task_id=item.task_id,
             dag_id=item.dag_id,
             run_id=item.run_id,
+            map_index=item.map_index,
         )
 
 
