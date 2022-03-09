@@ -1071,7 +1071,6 @@ def print_happy_cat(message):
     print("""(='_' )""".center(size))
     print("""(,(") (")""".center(size))
     print("""^^^""".center(size))
-    return
 
 
 def _revision_greater(config, this_rev, base_rev):
